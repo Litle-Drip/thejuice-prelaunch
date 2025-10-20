@@ -31,7 +31,7 @@
     <!-- Header -->
     <header class="flex items-center justify-between mb-8">
       <h1 class="text-2xl md:text-3xl font-semibold tracking-tight">TheJuice — Pre‑Launch Bet</h1>
-      <a id="toApp" class="text-sm text-cyan-300 underline decoration-dotted" href="#" target="_blank" rel="noopener">Open current app →</a>
+      <span class="text-sm text-slate-400 select-none cursor-not-allowed" title="Pre‑launch preview — app link locked">Open current app →</span>
     </header>
 
     <!-- Hero -->
@@ -84,6 +84,7 @@
         </form>
         <div class="glass rounded-xl p-3 w-[116px] justify-self-end">
           <canvas id="qr" width="100" height="100" class="block mx-auto"></canvas>
+          <div id="qrFallback" class="hidden text-[10px] text-slate-400 text-center mt-1">QR unavailable</div>
         </div>
       </div>
       <p id="emailMsg" class="text-xs mt-2 text-slate-400"></p>
@@ -103,7 +104,6 @@
       <div class="glass rounded-xl p-4"><div class="text-sm text-slate-300 mb-2">Totals (device‑local demo)</div><div id="totals" class="text-lg font-medium">0 : 0</div></div>
       <div class="glass rounded-xl p-4 flex items-center gap-2">
         <button id="exportJson" class="btn rounded-lg px-3 py-2 text-sm hover:bg-white/5">Export demo data (JSON)</button>
-        <button id="resetDemo" class="btn rounded-lg px-3 py-2 text-sm hover:bg-white/5">Reset</button>
       </div>
     </section>
 
@@ -116,11 +116,23 @@
   <!-- QR: draw via Google Charts (lightweight) -->
   <script>
     function drawQR(text, size, canvas){
-      const url = 'https://chart.googleapis.com/chart?cht=qr&chs=' + size + 'x' + size + '&chl=' + encodeURIComponent(text);
       const ctx = canvas.getContext('2d');
+      canvas.width = size; canvas.height = size; ctx.clearRect(0,0,size,size);
+      const sources = [
+        'https://chart.googleapis.com/chart?cht=qr&chs='+size+'x'+size+'&chl='+encodeURIComponent(text),
+        'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(text),
+        'https://quickchart.io/qr?size='+size+'&text='+encodeURIComponent(text)
+      ];
+      let idx = 0; let timeoutHandle;
       const img = new Image(); img.crossOrigin = 'anonymous';
-      img.onload = ()=>{ canvas.width=size; canvas.height=size; ctx.drawImage(img,0,0,size,size); };
-      img.src = url;
+      img.onload = () => { clearTimeout(timeoutHandle); ctx.drawImage(img,0,0,size,size); };
+      const fail = () => {
+        if (idx < sources.length-1) { idx++; load(); }
+        else { document.getElementById('qrFallback')?.classList.remove('hidden'); }
+      };
+      img.onerror = fail;
+      function load(){ document.getElementById('qrFallback')?.classList.add('hidden'); img.src = sources[idx]; timeoutHandle = setTimeout(fail, 2500); }
+      load();
     }
   </script>
 
@@ -235,3 +247,4 @@
   </script>
 </body>
 </html>
+
