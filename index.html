@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TheJuice — Pre-Launch Bet</title>
+  <title>TheJuice — Pre‑Launch Bet</title>
   <meta name="description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
   <meta name="theme-color" content="#0b1220" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2300E6F6'/%3E%3Cpath d='M22 24h20v4H22zm0 12h20v4H22z' fill='%230B1220'/%3E%3C/svg%3E" />
@@ -20,18 +20,14 @@
 </head>
 <body class="min-h-screen">
   <main class="max-w-5xl mx-auto px-5 py-12">
-    <!-- Header -->
     <header class="mb-8 text-center">
-      <h1 class="text-3xl md:text-4xl font-bold tracking-tight">TheJuice — Pre-Launch Bet</h1>
+      <h1 class="text-3xl md:text-4xl font-bold tracking-tight">TheJuice — Pre‑Launch Bet</h1>
       <p class="text-cyan-400 text-sm mt-2">The first ever bet on The Juice… was The Juice itself</p>
     </header>
 
-    <!-- Card -->
     <section class="glass rounded-2xl p-6 md:p-8">
-      <h2 class="text-2xl md:text-3xl font-semibold">
-        Will The Juice launch before <span id="deadlineLabel"></span>?
-      </h2>
-      <p class="text-slate-300 mt-2">No bookie. Just code. (Pre-launch demo — real escrow + wallets go live at launch.)</p>
+      <h2 class="text-2xl md:text-3xl font-semibold">Will The Juice launch before <span id="deadlineLabel"></span>?</h2>
+      <p class="text-slate-300 mt-2">No bookie. Just code. (Pre‑launch demo — real escrow + wallets go live at launch.)</p>
 
       <!-- Countdown -->
       <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-2xl">
@@ -53,7 +49,7 @@
         </div>
       </div>
 
-      <!-- Choices (static demo) -->
+      <!-- Choices (static for demo) -->
       <div class="mt-6 grid md:grid-cols-2 gap-3">
         <div class="before-card rounded-xl p-4">
           <div class="text-green-300 font-medium">Before deadline</div>
@@ -68,9 +64,8 @@
       <!-- Email capture -->
       <form id="emailForm" class="mt-8 max-w-xl" novalidate>
         <div class="flex gap-2">
-          <input id="emailInput" type="email" required placeholder="Enter email for early access"
-                 class="input flex-1 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 text-white focus:outline-none" />
-          <button id="notifyBtn" class="rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" type="submit">Notify me</button>
+          <input id="emailInput" type="email" required placeholder="Enter email for early access" class="input flex-1 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 text-white focus:outline-none" />
+          <button class="rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" type="submit">Notify me</button>
         </div>
         <p id="emailMsg" class="text-xs mt-2 text-slate-400"></p>
       </form>
@@ -81,55 +76,50 @@
         <canvas id="qr" width="96" height="96" class="rounded-lg border border-white/20 bg-white/5"></canvas>
       </div>
 
-      <p class="text-slate-400 text-xs mt-6">
-        Pre-launch demo: votes are visual only. On launch, bets will be on-chain (Base) with trustless escrow and a protocol fee (min 2.5%).
-      </p>
+      <p class="text-slate-400 text-xs mt-6">Pre‑launch demo: votes are visual only. On launch, bets will be on‑chain (Base) with trustless escrow and a protocol fee (min 2.5%).</p>
     </section>
 
     <footer class="mt-10 text-center text-slate-400 text-sm">
-      <div>“The Juice is on-chain.” • “No bookie. Just code.”</div>
+      <div>“The Juice is on‑chain.” • “No bookie. Just code.”</div>
       <div class="mt-1">© 2025 TheJuice</div>
     </footer>
   </main>
 
   <script>
-    /* ================= CONFIG ================= */
+    // ================== CONFIG ==================
     const LAUNCH_UTC = '2025-12-31T23:59:59Z'; // change if needed
-    const EMAIL_POST_ENDPOINT = '';            // e.g. 'https://formspree.io/f/xxxxxx' (blank = store locally)
-    /* ========================================= */
+    const EMAIL_POST_ENDPOINT = ''; // e.g. 'https://formspree.io/f/xxxxxx' (blank = store locally)
+    // ============================================
 
-    // Safari-safe deadline parser
+    // Robust date parser (handles Safari/Firefox quirks)
     function parseDeadline(s){
       let d = new Date(s);
       if (isNaN(d)) { try { d = new Date(String(s).replace(/-/g,'/').replace('T',' ').replace('Z',' UTC')); } catch(e){} }
-      if (isNaN(d)) {
-        const m = String(s).match(/(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})Z?/);
-        if (m) d = new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6]));
-      }
+      if (isNaN(d)) { const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z?/); if (m) d = new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6])); }
       if (isNaN(d)) d = new Date(Date.now() + 90*24*60*60*1000);
       return d;
     }
 
     // Countdown
     function startCountdown(deadline){
-      const $ = id => document.getElementById(id);
+      const $ = (id)=>document.getElementById(id);
       function update(){
         const now = new Date();
         let diff = Math.max(0, deadline - now);
         const days = Math.floor(diff / 86400000); diff -= days*86400000;
         const hours = Math.floor(diff / 3600000);  diff -= hours*3600000;
-        const mins  = Math.floor(diff / 60000);    diff -= mins*60000;
-        const secs  = Math.floor(diff / 1000);
+        const minutes = Math.floor(diff / 60000);  diff -= minutes*60000;
+        const seconds = Math.floor(diff / 1000);
         $('d').textContent = days;
         $('h').textContent = hours;
-        $('m').textContent = mins;
-        $('s').textContent = secs;
+        $('m').textContent = minutes;
+        $('s').textContent = seconds;
       }
       update();
       setInterval(update, 1000);
     }
 
-    // QR with fallbacks
+    // QR with fallbacks (Google → qrserver → QuickChart)
     function drawQR(text, size, canvas){
       if(!canvas) return;
       const srcs = [
@@ -145,40 +135,30 @@
       load();
     }
 
-    // Email capture (endpoint or local fallback)
+    // Email capture (Formspree/endpoint or local fallback)
     function setupEmail(){
-      const form  = document.getElementById('emailForm');
+      const form = document.getElementById('emailForm');
       if(!form) return;
       const input = document.getElementById('emailInput');
       const msg   = document.getElementById('emailMsg');
-      const btn   = document.getElementById('notifyBtn');
-
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
         const email = (input.value||'').trim();
-        if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)){
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
           msg.textContent='Please enter a valid email.'; msg.style.color='#fda4af'; return;
         }
-        btn.disabled = true; const old = btn.textContent; btn.textContent = '...';
         try{
           if(EMAIL_POST_ENDPOINT){
-            const r = await fetch(EMAIL_POST_ENDPOINT,{
-              method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ email, ts: new Date().toISOString(), source:'thejuice-prelaunch' })
-            });
+            const r = await fetch(EMAIL_POST_ENDPOINT,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, ts: new Date().toISOString(), source:'thejuice-prelaunch' }) });
             if(!r.ok) throw new Error();
-            msg.textContent = \"Thanks! You're on the list.\"; msg.style.color='#86efac'; input.value='';
+            msg.textContent = "Thanks! You're on the list."; msg.style.color='#86efac'; input.value='';
           } else {
             const key='thejuice_emails'; const list = JSON.parse(localStorage.getItem(key)||'[]');
             if(!list.includes(email)) list.push(email);
             localStorage.setItem(key, JSON.stringify(list));
             msg.textContent='Saved locally. Add EMAIL_POST_ENDPOINT later to sync.'; msg.style.color='#fde68a'; input.value='';
           }
-        }catch(_){
-          msg.textContent='Could not submit right now.'; msg.style.color='#fda4af';
-        } finally {
-          btn.disabled = false; btn.textContent = old;
-        }
+        }catch(_){ msg.textContent='Could not submit right now.'; msg.style.color='#fda4af'; }
       });
     }
 
@@ -186,13 +166,7 @@
     function setupCopyLink(){
       const btn = document.getElementById('copyLink');
       if(!btn) return;
-      btn.addEventListener('click', async ()=>{
-        try{
-          await navigator.clipboard.writeText(location.href);
-          const old = btn.textContent; btn.textContent = 'Copied ✓';
-          setTimeout(()=>btn.textContent = old, 900);
-        }catch(_){}
-      });
+      btn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(location.href); btn.textContent='Copied'; setTimeout(()=>btn.textContent='Copy page link',900); }catch(_){} });
     }
 
     // Init
