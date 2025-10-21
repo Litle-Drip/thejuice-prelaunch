@@ -12,8 +12,13 @@
     body { background: radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,.12), transparent 40%), radial-gradient(1000px 700px at 90% 0%, rgba(255,215,0,.08), transparent 45%), #0b1220; color:#fff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
     .glass { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px); }
     .digit { font-variant-numeric: tabular-nums; letter-spacing:.25px; }
+    .choice-card { width: 100%; display: block; text-align: left; border: none; cursor: pointer; color: inherit; font: inherit; padding: 0; background: transparent; }
+    .choice-card:focus-visible { outline: 2px solid rgba(0,230,246,.6); outline-offset: 2px; }
+    .choice-card .card-inner { padding: 1rem; border-radius: 0.75rem; }
     .before-card { background: rgba(0,255,150,.10); border: 1px solid rgba(0,255,150,.25); }
     .after-card  { background: rgba(255,80,80,.10);  border: 1px solid rgba(255,80,80,.25); }
+    .choice-card.selected .before-card,
+    .choice-card.selected .after-card { box-shadow: 0 0 0 2px rgba(0,230,246,.55); }
     .input { background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18); }
     @media (max-width: 480px){ .grid { gap: .5rem; } }
   </style>
@@ -55,15 +60,20 @@
 
       <!-- Choices (static demo) -->
       <div class="mt-6 grid md:grid-cols-2 gap-3">
-        <div class="before-card rounded-xl p-4">
-          <div class="text-green-300 font-medium">Before deadline</div>
-          <div class="text-slate-400 text-sm">I believe we ship before the countdown ends.</div>
-        </div>
-        <div class="after-card rounded-xl p-4">
-          <div class="text-red-300 font-medium">After deadline</div>
-          <div class="text-slate-400 text-sm">We think it slips past the countdown.</div>
-        </div>
+        <button type="button" class="choice-card" data-choice="before">
+          <div class="before-card card-inner">
+            <div class="text-green-300 font-medium">Before deadline</div>
+            <div class="text-slate-400 text-sm">I believe we ship before the countdown ends.</div>
+          </div>
+        </button>
+        <button type="button" class="choice-card" data-choice="after">
+          <div class="after-card card-inner">
+            <div class="text-red-300 font-medium">After deadline</div>
+            <div class="text-slate-400 text-sm">We think it slips past the countdown.</div>
+          </div>
+        </button>
       </div>
+      <p id="choiceMsg" class="text-slate-400 text-xs mt-2"></p>
 
       <!-- Email capture -->
       <form id="emailForm" class="mt-8 max-w-xl" novalidate>
@@ -127,6 +137,36 @@
       }
       update();
       setInterval(update, 1000);
+    }
+
+    // Choice selection demo
+    function setupChoices(){
+      const cards = document.querySelectorAll('.choice-card');
+      if(!cards.length) return;
+      const msg = document.getElementById('choiceMsg');
+      let selected = null;
+      if(msg) msg.textContent = 'Tap a side to log your pick (local demo only).';
+      cards.forEach(card => {
+        card.setAttribute('aria-pressed', 'false');
+        card.addEventListener('click', () => {
+          if(selected === card){
+            card.classList.remove('selected');
+            card.setAttribute('aria-pressed', 'false');
+            selected = null;
+            if(msg) msg.textContent = 'Tap a side to log your pick (local demo only).';
+            return;
+          }
+          if(selected) selected.classList.remove('selected');
+          if(selected) selected.setAttribute('aria-pressed', 'false');
+          card.classList.add('selected');
+          card.setAttribute('aria-pressed', 'true');
+          selected = card;
+          if(msg){
+            const choice = card.dataset.choice === 'before' ? '“Before deadline”' : '“After deadline”';
+            msg.textContent = `You picked ${choice}.`;
+          }
+        });
+      });
     }
 
     // QR with fallbacks
@@ -202,6 +242,7 @@
       if(lbl) lbl.textContent = deadline.toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'});
 
       startCountdown(deadline);
+      setupChoices();
       setupEmail();
       setupCopyLink();
       drawQR(location.href, 96, document.getElementById('qr'));
