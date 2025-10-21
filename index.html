@@ -6,178 +6,171 @@
   <title>TheJuice — Pre‑Launch Bet</title>
   <meta name="description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
   <meta name="theme-color" content="#0b1220" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2300E6F6'/%3E%3Cpath d='M22 24h20v4H22zm0 12h20v4H22z' fill='%230B1220'/%3E%3C/svg%3E" />
+  <meta property="og:title" content="TheJuice — Pre‑Launch Bet" />
+  <meta property="og:description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
-    body { background: radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,.12), transparent 40%), radial-gradient(1000px 700px at 90% 0%, rgba(255,215,0,.08), transparent 45%), #0b1220; color:#fff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
-    .glass { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px); }
-    .digit { font-variant-numeric: tabular-nums; letter-spacing:.25px; }
-    .before-card { background: rgba(0,255,150,.10); border: 1px solid rgba(0,255,150,.25); }
-    .after-card  { background: rgba(255,80,80,.10);  border: 1px solid rgba(255,80,80,.25); }
-    .input { background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18); }
-    @media (max-width: 480px){ .grid { gap: .5rem; } }
+    body {
+      background: radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,.12), transparent 40%),
+                  radial-gradient(1000px 700px at 90% 0%, rgba(255,215,0,.08), transparent 45%), #0b1220;
+      color: #fff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .glass { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .digit { font-variant-numeric: tabular-nums; letter-spacing:.25px; transition: transform .2s ease, color .2s ease; }
+    .pulse { transform: scale(1.05); color: #00E6F6; }
+    .progress { height:6px; border-radius:9999px; background: rgba(255,255,255,.08); overflow:hidden; position: relative; }
+    .progress > span { display:block; height:100%; background: linear-gradient(90deg, rgba(0,230,246,0.3), rgba(0,230,246,0.6), rgba(0,230,246,0.3)); background-size:200% 100%; animation: shimmer 4s infinite linear; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .selected { outline: 2px solid #00E6F6; outline-offset: 2px; }
+    .grid-gap { gap: 1.25rem; }
   </style>
 </head>
 <body class="min-h-screen">
-  <main class="max-w-5xl mx-auto px-5 py-12">
-    <header class="mb-8 text-center">
-      <h1 class="text-3xl md:text-4xl font-bold tracking-tight">TheJuice — Pre‑Launch Bet</h1>
-      <p class="text-cyan-400 text-sm mt-2">The first ever bet on The Juice… was The Juice itself</p>
+  <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+    <header class="text-center space-y-3">
+      <h1 class="text-4xl font-bold tracking-tight">TheJuice — Pre‑Launch Bet</h1>
+      <p class="text-cyan-400 text-sm">The first ever bet on The Juice… was The Juice itself</p>
     </header>
 
-    <section class="glass rounded-2xl p-6 md:p-8">
-      <h2 class="text-2xl md:text-3xl font-semibold">Will The Juice launch before <span id="deadlineLabel"></span>?</h2>
-      <p class="text-slate-300 mt-2">No bookie. Just code. (Pre‑launch demo — real escrow + wallets go live at launch.)</p>
-
-      <!-- Countdown -->
-      <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-2xl">
-        <div class="glass rounded-xl p-4 text-center">
-          <div id="d" class="digit text-4xl md:text-5xl font-bold">—</div>
-          <div class="text-xs text-slate-300 mt-1">Days</div>
-        </div>
-        <div class="glass rounded-xl p-4 text-center">
-          <div id="h" class="digit text-4xl md:text-5xl font-bold">—</div>
-          <div class="text-xs text-slate-300 mt-1">Hours</div>
-        </div>
-        <div class="glass rounded-xl p-4 text-center">
-          <div id="m" class="digit text-4xl md:text-5xl font-bold">—</div>
-          <div class="text-xs text-slate-300 mt-1">Minutes</div>
-        </div>
-        <div class="glass rounded-xl p-4 text-center">
-          <div id="s" class="digit text-4xl md:text-5xl font-bold">—</div>
-          <div class="text-xs text-slate-300 mt-1">Seconds</div>
-        </div>
+    <section class="glass rounded-2xl p-8 space-y-10">
+      <div class="text-center space-y-3">
+        <h2 class="text-3xl font-semibold">Will The Juice launch before <span id="deadlineLabel"></span>?</h2>
+        <p class="text-slate-300">No bookie. Just code. (Pre‑launch demo — real escrow + wallets go live at launch.)</p>
       </div>
 
-      <!-- Choices (static for demo) -->
-      <div class="mt-6 grid md:grid-cols-2 gap-3">
-        <div class="before-card rounded-xl p-4">
-          <div class="text-green-300 font-medium">Before deadline</div>
-          <div class="text-slate-400 text-sm">I believe we ship before the countdown ends.</div>
-        </div>
-        <div class="after-card rounded-xl p-4">
-          <div class="text-red-300 font-medium">After deadline</div>
-          <div class="text-slate-400 text-sm">We think it slips past the countdown.</div>
-        </div>
+      <div id="countdown" class="grid grid-cols-2 md:grid-cols-4 gap-4 justify-center">
+        <div class="glass rounded-xl p-4 text-center"><div id="d" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Days</div></div>
+        <div class="glass rounded-xl p-4 text-center"><div id="h" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Hours</div></div>
+        <div class="glass rounded-xl p-4 text-center"><div id="m" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Minutes</div></div>
+        <div class="glass rounded-xl p-4 text-center"><div id="s" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Seconds</div></div>
       </div>
 
-      <!-- Email capture -->
-      <form id="emailForm" class="mt-8 max-w-xl" novalidate>
+      <div class="grid md:grid-cols-2 grid-gap">
+        <button id="btnBefore" class="rounded-xl p-4 text-left bg-green-400/10 border border-green-300/20 hover:bg-green-400/20">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-green-300 font-medium">Before deadline</div>
+              <div class="text-slate-400 text-sm">I believe we ship before the countdown ends.</div>
+            </div>
+            <div class="text-right">
+              <div id="beforePct" class="text-lg font-semibold">0%</div>
+              <div id="beforeVotes" class="text-xs text-slate-400">0 votes</div>
+            </div>
+          </div>
+          <div class="progress mt-3"><span id="beforeBar" style="width:0%"></span></div>
+        </button>
+        <button id="btnAfter" class="rounded-xl p-4 text-left bg-red-400/10 border border-red-300/20 hover:bg-red-400/20">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-red-300 font-medium">After deadline</div>
+              <div class="text-slate-400 text-sm">We think it slips past the countdown.</div>
+            </div>
+            <div class="text-right">
+              <div id="afterPct" class="text-lg font-semibold">0%</div>
+              <div id="afterVotes" class="text-xs text-slate-400">0 votes</div>
+            </div>
+          </div>
+          <div class="progress mt-3"><span id="afterBar" style="width:0%"></span></div>
+        </button>
+      </div>
+
+      <div class="grid md:grid-cols-3 grid-gap">
+        <div class="glass rounded-xl p-3 text-center"><div class="text-xs text-slate-300">Your vote</div><div id="yourVote" class="text-sm font-medium">—</div></div>
+        <div class="glass rounded-xl p-3 md:col-span-2 text-center"><div class="text-xs text-slate-300">Totals</div><div id="totals" class="text-sm font-medium">0 : 0</div></div>
+      </div>
+
+      <form id="emailForm" class="max-w-md mx-auto space-y-2">
         <div class="flex gap-2">
-          <input id="emailInput" type="email" required placeholder="Enter email for early access" class="input flex-1 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 text-white focus:outline-none" />
-          <button class="rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" type="submit">Notify me</button>
+          <input id="emailInput" type="email" placeholder="Enter email for early access" class="input flex-1 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 text-white focus:outline-none" required>
+          <button id="notifyBtn" class="btn rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" type="submit">Notify me</button>
         </div>
-        <p id="emailMsg" class="text-xs mt-2 text-slate-400"></p>
+        <p id="emailMsg" class="text-xs text-slate-400"></p>
       </form>
 
-      <!-- Share + QR -->
-      <div class="mt-4 flex items-center gap-3">
-        <button id="copyLink" class="rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">Copy page link</button>
+      <div class="flex items-center justify-center gap-3">
+        <button id="copyLink" class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">Copy page link</button>
+        <span id="copyToast" class="text-xs text-emerald-300 opacity-0 transition-opacity">Copied ✓</span>
         <canvas id="qr" width="96" height="96" class="rounded-lg border border-white/20 bg-white/5"></canvas>
       </div>
 
-      <p class="text-slate-400 text-xs mt-6">Pre‑launch demo: votes are visual only. On launch, bets will be on‑chain (Base) with trustless escrow and a protocol fee (min 2.5%).</p>
+      <p class="text-slate-400 text-xs text-center">Pre‑launch demo: votes are visual only. On launch, bets will be on‑chain (Base) with trustless escrow and a protocol fee (min 2.5%).</p>
     </section>
-
-    <footer class="mt-10 text-center text-slate-400 text-sm">
-      <div>“The Juice is on‑chain.” • “No bookie. Just code.”</div>
-      <div class="mt-1">© 2025 TheJuice</div>
-    </footer>
   </main>
 
   <script>
-    // ================== CONFIG ==================
-    const LAUNCH_UTC = '2025-12-31T23:59:59Z'; // change if needed
-    const EMAIL_POST_ENDPOINT = ''; // e.g. 'https://formspree.io/f/xxxxxx' (blank = store locally)
-    // ============================================
+    const LAUNCH_UTC = '2025-12-31T23:59:59Z';
 
-    // Robust date parser (handles Safari/Firefox quirks)
-    function parseDeadline(s){
-      let d = new Date(s);
-      if (isNaN(d)) { try { d = new Date(String(s).replace(/-/g,'/').replace('T',' ').replace('Z',' UTC')); } catch(e){} }
-      if (isNaN(d)) { const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z?/); if (m) d = new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6])); }
-      if (isNaN(d)) d = new Date(Date.now() + 90*24*60*60*1000);
-      return d;
-    }
+    function parseDeadline(s){ return new Date(s); }
 
-    // Countdown
     function startCountdown(deadline){
-      const $ = (id)=>document.getElementById(id);
+      const ids = ['d','h','m','s'];
       function update(){
-        const now = new Date();
-        let diff = Math.max(0, deadline - now);
-        const days = Math.floor(diff / 86400000); diff -= days*86400000;
-        const hours = Math.floor(diff / 3600000);  diff -= hours*3600000;
-        const minutes = Math.floor(diff / 60000);  diff -= minutes*60000;
-        const seconds = Math.floor(diff / 1000);
-        $('d').textContent = days;
-        $('h').textContent = hours;
-        $('m').textContent = minutes;
-        $('s').textContent = seconds;
+        const now = new Date(); let diff = Math.max(0, deadline-now);
+        const d = Math.floor(diff/86400000); diff-=d*86400000;
+        const h = Math.floor(diff/3600000); diff-=h*3600000;
+        const m = Math.floor(diff/60000); diff-=m*60000;
+        const s = Math.floor(diff/1000);
+        [d,h,m,s].forEach((v,i)=>document.getElementById(ids[i]).textContent=v);
       }
       update();
-      setInterval(update, 1000);
+      let ticks=0;
+      setInterval(()=>{ update(); ticks++; if(ticks%10===0){ document.querySelectorAll('.digit').forEach(el=>{ el.classList.add('pulse'); setTimeout(()=>el.classList.remove('pulse'),300); }); } },1000);
     }
 
-    // QR with fallbacks (Google → qrserver → QuickChart)
     function drawQR(text, size, canvas){
       if(!canvas) return;
-      const srcs = [
+      const srcs=[
         `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}`,
         `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`,
         `https://quickchart.io/qr?size=${size}&text=${encodeURIComponent(text)}`
       ];
-      const ctx = canvas.getContext('2d');
+      const ctx=canvas.getContext('2d');
       let i=0, t; const img=new Image(); img.crossOrigin='anonymous';
-      img.onload = ()=>{ clearTimeout(t); ctx.clearRect(0,0,size,size); ctx.drawImage(img,0,0,size,size); };
-      img.onerror = ()=>{ if(i<srcs.length-1){ i++; load(); } };
-      function load(){ img.src = srcs[i]; t = setTimeout(()=>img.onerror(), 2500); }
+      img.onload=()=>{ clearTimeout(t); ctx.clearRect(0,0,size,size); ctx.drawImage(img,0,0,size,size); };
+      img.onerror=()=>{ if(i<srcs.length-1){ i++; load(); } };
+      function load(){ img.src=srcs[i]; t=setTimeout(()=>img.onerror(), 2500); }
       load();
     }
 
-    // Email capture (Formspree/endpoint or local fallback)
-    function setupEmail(){
-      const form = document.getElementById('emailForm');
-      if(!form) return;
-      const input = document.getElementById('emailInput');
-      const msg   = document.getElementById('emailMsg');
-      form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        const email = (input.value||'').trim();
-        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
-          msg.textContent='Please enter a valid email.'; msg.style.color='#fda4af'; return;
-        }
-        try{
-          if(EMAIL_POST_ENDPOINT){
-            const r = await fetch(EMAIL_POST_ENDPOINT,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, ts: new Date().toISOString(), source:'thejuice-prelaunch' }) });
-            if(!r.ok) throw new Error();
-            msg.textContent = "Thanks! You're on the list."; msg.style.color='#86efac'; input.value='';
-          } else {
-            const key='thejuice_emails'; const list = JSON.parse(localStorage.getItem(key)||'[]');
-            if(!list.includes(email)) list.push(email);
-            localStorage.setItem(key, JSON.stringify(list));
-            msg.textContent='Saved locally. Add EMAIL_POST_ENDPOINT later to sync.'; msg.style.color='#fde68a'; input.value='';
-          }
-        }catch(_){ msg.textContent='Could not submit right now.'; msg.style.color='#fda4af'; }
-      });
+    function confettiLaunch(){ confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+
+    const STORE_KEY='tj_prelaunch_votes_v2';
+    function getData(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||{totals:{before:0,after:0},user:{vote:null}};}catch{return {totals:{before:0,after:0},user:{vote:null}};} }
+    function setData(d){ localStorage.setItem(STORE_KEY, JSON.stringify(d)); }
+
+    function render(d){
+      const a=d.totals.before||0,b=d.totals.after||0,sum=(a+b)||1;
+      const bp=a/sum,ap=b/sum;
+      document.getElementById('beforePct').textContent=(bp*100).toFixed(1)+'%';
+      document.getElementById('afterPct').textContent=(ap*100).toFixed(1)+'%';
+      document.getElementById('beforeVotes').textContent=a+' vote'+(a!==1?'s':'');
+      document.getElementById('afterVotes').textContent=b+' vote'+(b!==1?'s':'');
+      document.getElementById('beforeBar').style.width=(bp*100)+'%';
+      document.getElementById('afterBar').style.width=(ap*100)+'%';
+      document.getElementById('totals').textContent=`${a} : ${b}`;
+      document.getElementById('yourVote').textContent=d.user.vote?d.user.vote.charAt(0).toUpperCase()+d.user.vote.slice(1):'—';
     }
 
-    // Copy link
-    function setupCopyLink(){
-      const btn = document.getElementById('copyLink');
-      if(!btn) return;
-      btn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(location.href); btn.textContent='Copied'; setTimeout(()=>btn.textContent='Copy page link',900); }catch(_){} });
+    function vote(side){
+      const d=getData();
+      if(!['before','after'].includes(side))return;
+      const firstVote=!d.user.vote;
+      if(d.user.vote===side){render(d);return;}
+      if(d.user.vote)d.totals[d.user.vote]=Math.max(0,(d.totals[d.user.vote]||0)-1);
+      d.user.vote=side; d.totals[side]=(d.totals[side]||0)+1; setData(d); render(d);
+      if(firstVote) confettiLaunch();
     }
 
-    // Init
-    document.addEventListener('DOMContentLoaded', ()=>{
-      const deadline = parseDeadline(LAUNCH_UTC);
-      const lbl = document.getElementById('deadlineLabel');
-      if(lbl) lbl.textContent = deadline.toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'});
-
+    document.addEventListener('DOMContentLoaded',()=>{
+      const deadline=parseDeadline(LAUNCH_UTC);
+      document.getElementById('deadlineLabel').textContent=deadline.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
       startCountdown(deadline);
-      setupEmail();
-      setupCopyLink();
+      document.getElementById('btnBefore').onclick=()=>vote('before');
+      document.getElementById('btnAfter').onclick=()=>vote('after');
+      render(getData());
+      // draw QR of current page
       drawQR(location.href, 96, document.getElementById('qr'));
     });
   </script>
