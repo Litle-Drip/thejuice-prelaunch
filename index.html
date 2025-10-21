@@ -7,244 +7,78 @@
   <meta name="description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2300E6F6'/%3E%3Cpath d='M22 24h20v4H22zm0 12h20v4H22z' fill='%230B1220'/%3E%3C/svg%3E" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    // === CONFIG: edit these ===
-    const LAUNCH_UTC = '2025-12-31T23:59:59Z'; // target launch deadline (UTC)
-    const SITE_URL   = 'https://litle-drip.github.io/betbase/'; // your app url
-    const EMAIL_POST_ENDPOINT = ''; // optional: e.g. 'https://formspree.io/f/xxxxxx' — leave blank to store locally
-    // ==========================
-  </script>
   <style>
-    :root { --bg:#0B1220; --card:#0f172a; --muted:#93a4bf; --accent:#00E6F6; --glow: 0 0 0 rgba(0,0,0,0); }
-    body { background: radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,0.12), transparent 40%), radial-gradient(1000px 700px at 90% 0%, rgba(255,215,0,0.08), transparent 45%), var(--bg); color:#fff; font-family: ui-sans-serif,system-ui,Segoe UI,Roboto,Inter,Helvetica,Arial; }
-    .glass { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03)); backdrop-filter: blur(8px); border:1px solid rgba(255,255,255,0.12); box-shadow: var(--glow); }
-    .btn { border:1px solid rgba(255,255,255,0.18); transition: transform .08s ease; }
-    .btn:active { transform: translateY(1px); }
-    .digit { font-variant-numeric: tabular-nums; letter-spacing:.5px; }
-    .before-card { background: rgba(0, 255, 150, 0.08); border: 1px solid rgba(0, 255, 150, 0.2); }
-    .after-card  { background: rgba(255, 80, 80, 0.08);  border: 1px solid rgba(255, 80, 80, 0.2); }
-    .input { background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.18); }
+    body { background-color: #0b1220; color: #fff; font-family: Inter, system-ui, sans-serif; }
+    .glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+    .digit { font-variant-numeric: tabular-nums; }
+    .before-card { background: rgba(0,255,150,0.1); border: 1px solid rgba(0,255,150,0.3); }
+    .after-card { background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.3); }
   </style>
 </head>
-<body class="min-h-screen">
-  <main class="max-w-5xl mx-auto px-5 py-10">
-    <!-- Header -->
-    <header class="flex items-center justify-between mb-8">
-      <h1 class="text-2xl md:text-3xl font-semibold tracking-tight">TheJuice — Pre‑Launch Bet</h1>
-      <span class="text-sm text-slate-400 select-none cursor-not-allowed" title="Pre‑launch preview — app link locked">Open current app →</span>
-    </header>
+<body class="min-h-screen flex flex-col items-center justify-center p-6">
+  <main class="max-w-3xl w-full">
+    <h1 class="text-3xl font-bold mb-4 text-center">TheJuice — Pre‑Launch Bet</h1>
+    <p class="text-center text-cyan-400 mb-2">The first ever bet on The Juice… was The Juice itself</p>
+    <h2 class="text-center text-xl mb-6">Will The Juice launch before <span id="deadlineLabel"></span>?</h2>
 
-    <!-- Hero -->
-    <section class="glass rounded-2xl p-6 md:p-8">
-      <p class="text-cyan-300 uppercase text-xs tracking-widest mb-2">The first ever bet on The Juice… was The Juice itself</p>
-      <h2 class="text-3xl md:text-4xl font-semibold leading-tight">Will The Juice launch before <span id="deadlineLabel"></span>?</h2>
-      <p class="text-slate-300 mt-2">No bookie. Just code. (This is a pre‑launch demo — real escrow goes live with wallet connect.)</p>
+    <!-- Countdown -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      <div class="glass rounded-xl p-4 text-center"><div id="d" class="digit text-4xl font-bold">0</div><div class="text-sm text-slate-300">Days</div></div>
+      <div class="glass rounded-xl p-4 text-center"><div id="h" class="digit text-4xl font-bold">0</div><div class="text-sm text-slate-300">Hours</div></div>
+      <div class="glass rounded-xl p-4 text-center"><div id="m" class="digit text-4xl font-bold">0</div><div class="text-sm text-slate-300">Minutes</div></div>
+      <div class="glass rounded-xl p-4 text-center"><div id="s" class="digit text-4xl font-bold">0</div><div class="text-sm text-slate-300">Seconds</div></div>
+    </div>
 
-      <!-- Countdown -->
-      <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-2xl">
-        <div class="glass rounded-xl p-4 text-center"><div id="d" class="digit text-4xl md:text-5xl font-bold">0</div><div class="text-xs text-slate-300 mt-1">Days</div></div>
-        <div class="glass rounded-xl p-4 text-center"><div id="h" class="digit text-4xl md:text-5xl font-bold">0</div><div class="text-xs text-slate-300 mt-1">Hours</div></div>
-        <div class="glass rounded-xl p-4 text-center"><div id="m" class="digit text-4xl md:text-5xl font-bold">0</div><div class="text-xs text-slate-300 mt-1">Minutes</div></div>
-        <div class="glass rounded-xl p-4 text-center"><div id="s" class="digit text-4xl md:text-5xl font-bold">0</div><div class="text-xs text-slate-300 mt-1">Seconds</div></div>
+    <!-- Choices -->
+    <div class="grid md:grid-cols-2 gap-4 mb-8">
+      <div class="before-card rounded-xl p-4">
+        <h3 class="text-green-300 font-medium">Before deadline</h3>
+        <p class="text-sm text-slate-400">I believe we ship before the countdown ends.</p>
       </div>
-
-      <!-- Bet choices (mock; local demo) -->
-      <div class="mt-8 grid md:grid-cols-2 gap-3">
-        <button id="btnBefore" class="btn before-card rounded-xl p-4 text-left hover:bg-green-400/10">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-lg font-medium text-green-300">Before deadline</div>
-              <div class="text-slate-400 text-sm">I believe we ship before the countdown ends.</div>
-            </div>
-            <div class="text-right">
-              <div id="beforePct" class="text-xl font-semibold">0%</div>
-              <div id="beforeVotes" class="text-slate-400 text-xs">0 votes</div>
-            </div>
-          </div>
-        </button>
-        <button id="btnAfter" class="btn after-card rounded-xl p-4 text-left hover:bg-red-400/10">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-lg font-medium text-red-300">After deadline</div>
-              <div class="text-slate-400 text-sm">We think it slips past the countdown.</div>
-            </div>
-            <div class="text-right">
-              <div id="afterPct" class="text-xl font-semibold">0%</div>
-              <div id="afterVotes" class="text-slate-400 text-xs">0 votes</div>
-            </div>
-          </div>
-        </button>
+      <div class="after-card rounded-xl p-4">
+        <h3 class="text-red-300 font-medium">After deadline</h3>
+        <p class="text-sm text-slate-400">We think it slips past the countdown.</p>
       </div>
+    </div>
 
-      <!-- Email capture -->
-      <div class="mt-8 grid md:grid-cols-[1fr_auto] gap-3 items-center">
-        <form id="emailForm" class="glass rounded-xl p-3 flex items-center gap-3" novalidate>
-          <input id="emailInput" type="email" required placeholder="Enter email for early access" class="input w-full rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 text-white focus:outline-none" />
-          <button class="btn rounded-lg px-4 py-2 text-sm hover:bg-white/5" type="submit">Notify me</button>
-        </form>
-        <div class="glass rounded-xl p-3 w-[116px] justify-self-end">
-          <canvas id="qr" width="100" height="100" class="block mx-auto"></canvas>
-          <div id="qrFallback" class="hidden text-[10px] text-slate-400 text-center mt-1">QR unavailable</div>
-        </div>
-      </div>
-      <p id="emailMsg" class="text-xs mt-2 text-slate-400"></p>
-
-      <!-- Share -->
-      <div class="mt-4 flex items-center gap-2">
-        <button id="copyLink" class="btn rounded-lg px-3 py-2 text-sm hover:bg-white/5">Copy page link</button>
-        <span id="copyMsg" class="text-xs text-slate-400 hidden">Copied ✓</span>
-      </div>
-
-      <p class="text-slate-400 text-xs mt-6">Pre‑launch demo: votes are stored locally to preview the experience. On launch, votes/bets will be on‑chain (Base) with trustless escrow and a protocol fee (min 2.5%).</p>
-    </section>
-
-    <!-- Admin mini panel -->
-    <section class="mt-6 grid md:grid-cols-3 gap-3">
-      <div class="glass rounded-xl p-4"><div class="text-sm text-slate-300 mb-2">Your vote</div><div id="yourVote" class="text-lg font-medium">—</div></div>
-      <div class="glass rounded-xl p-4"><div class="text-sm text-slate-300 mb-2">Totals (device‑local demo)</div><div id="totals" class="text-lg font-medium">0 : 0</div></div>
-      <div class="glass rounded-xl p-4 flex items-center gap-2">
-        <button id="exportJson" class="btn rounded-lg px-3 py-2 text-sm hover:bg-white/5">Export demo data (JSON)</button>
-      </div>
-    </section>
-
-    <footer class="mt-10 text-center text-slate-400 text-sm">
-      <div>“The Juice is on‑chain.” • “No bookie. Just code.”</div>
-      <div class="mt-1">© 2025 TheJuice</div>
-    </footer>
+    <p class="text-center text-slate-400 text-sm">“The Juice is on‑chain.” • “No bookie. Just code.”</p>
   </main>
 
-  <!-- QR: draw via Google Charts (lightweight) -->
   <script>
-    function drawQR(text, size, canvas){
-      const ctx = canvas.getContext('2d');
-      canvas.width = size; canvas.height = size; ctx.clearRect(0,0,size,size);
-      const sources = [
-        'https://chart.googleapis.com/chart?cht=qr&chs='+size+'x'+size+'&chl='+encodeURIComponent(text),
-        'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(text),
-        'https://quickchart.io/qr?size='+size+'&text='+encodeURIComponent(text)
-      ];
-      let idx = 0; let timeoutHandle;
-      const img = new Image(); img.crossOrigin = 'anonymous';
-      img.onload = () => { clearTimeout(timeoutHandle); ctx.drawImage(img,0,0,size,size); };
-      const fail = () => {
-        if (idx < sources.length-1) { idx++; load(); }
-        else { document.getElementById('qrFallback')?.classList.remove('hidden'); }
-      };
-      img.onerror = fail;
-      function load(){ document.getElementById('qrFallback')?.classList.add('hidden'); img.src = sources[idx]; timeoutHandle = setTimeout(fail, 2500); }
-      load();
+    const LAUNCH_UTC = '2025-12-31T23:59:59Z';
+
+    function parseDeadline(s){
+      let d = new Date(s);
+      if (isNaN(d)) {
+        try { d = new Date(String(s).replace(/-/g,'/').replace('T',' ').replace('Z',' UTC')); } catch(e){}
+      }
+      if (isNaN(d)) { const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z?/); if (m) d = new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+m[6])); }
+      if (isNaN(d)) { d = new Date(Date.now() + 90*24*60*60*1000); }
+      return d;
     }
-  </script>
-
-  <script>
-    const $ = (id) => document.getElementById(id);
-    const KEY = 'juice_prelaunch_demo_v1';
-
-    function getData(){
-      try{
-        const raw = localStorage.getItem(KEY);
-        if(!raw) return { totals:{before:0, after:0}, user:{vote:null}, emails:[] };
-        const d = JSON.parse(raw);
-        return {
-          totals: { before: Number(d?.totals?.before)||0, after: Number(d?.totals?.after)||0 },
-          user:   { vote: (d?.user?.vote==='before'||d?.user?.vote==='after')? d.user.vote : null },
-          emails: Array.isArray(d?.emails)? d.emails : []
-        };
-      }catch{ return { totals:{before:0, after:0}, user:{vote:null}, emails:[] }; }
-    }
-    function setData(d){ try{ localStorage.setItem(KEY, JSON.stringify(d)); }catch{} }
-
-    function fmtPct(n){ return (Math.round(n*1000)/10).toFixed(1) + '%'; }
 
     function init(){
-      // Links & labels
-      $('toApp').href = SITE_URL;
-      const deadline = new Date(LAUNCH_UTC);
-      const dateLabel = deadline.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
-      $('deadlineLabel').textContent = dateLabel;
+      const deadline = parseDeadline(LAUNCH_UTC);
+      document.getElementById('deadlineLabel').textContent = deadline.toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'});
 
-      // Countdown
-      function tick(){
+      function updateCountdown(){
         const now = new Date();
         let diff = Math.max(0, deadline - now);
-        const d = Math.floor(diff/86400000); diff -= d*86400000;
-        const h = Math.floor(diff/3600000);  diff -= h*3600000;
-        const m = Math.floor(diff/60000);    diff -= m*60000;
-        const s = Math.floor(diff/1000);
-        $('d').textContent=d; $('h').textContent=h; $('m').textContent=m; $('s').textContent=s;
+        const days = Math.floor(diff / (1000*60*60*24)); diff -= days*(1000*60*60*24);
+        const hours = Math.floor(diff / (1000*60*60)); diff -= hours*(1000*60*60);
+        const minutes = Math.floor(diff / (1000*60)); diff -= minutes*(1000*60);
+        const seconds = Math.floor(diff / 1000);
+        document.getElementById('d').textContent = days;
+        document.getElementById('h').textContent = hours;
+        document.getElementById('m').textContent = minutes;
+        document.getElementById('s').textContent = seconds;
       }
-      tick(); setInterval(tick,1000);
 
-      // Load data
-      render(getData());
-
-      // Voting
-      $('btnBefore').onclick = ()=> vote('before');
-      $('btnAfter').onclick  = ()=> vote('after');
-
-      // Share copy
-      $('copyLink').onclick = async ()=>{
-        try{ await navigator.clipboard.writeText(location.href); $('copyMsg').classList.remove('hidden'); setTimeout(()=>$('copyMsg').classList.add('hidden'), 1200);}catch{}
-      };
-
-      // Email capture
-      $('emailForm').addEventListener('submit', onEmailSubmit);
-
-      // Admin
-      $('exportJson').onclick = ()=>{
-        const blob = new Blob([JSON.stringify(getData(), null, 2)], {type:'application/json'});
-        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='thejuice-prelaunch-demo.json'; a.click(); URL.revokeObjectURL(a.href);
-      };
-      $('resetDemo').onclick = ()=>{ localStorage.removeItem(KEY); location.reload(); };
-
-      // QR
-      drawQR(location.href, 100, $('qr'));
-    }
-
-    function vote(side){
-      const d = getData();
-      if(side!=='before'&&side!=='after') return;
-      if(d.user.vote===side){ render(d); return; }
-      if(d.user.vote){ d.totals[d.user.vote] = Math.max(0, Number(d.totals[d.user.vote]||0) - 1); }
-      d.user.vote = side; d.totals[side] = Math.max(0, Number(d.totals[side]||0)) + 1;
-      setData(d); render(d);
-    }
-
-    async function onEmailSubmit(e){
-      e.preventDefault();
-      const input = $('emailInput'); const msg=$('emailMsg');
-      const email = (input.value||'').trim();
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ msg.textContent='Please enter a valid email.'; msg.className='text-xs mt-2 text-red-300'; return; }
-      msg.textContent='';
-
-      try{
-        if(EMAIL_POST_ENDPOINT){
-          const res = await fetch(EMAIL_POST_ENDPOINT,{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, ts:new Date().toISOString(), source:'prelaunch' })});
-          if(!res.ok) throw new Error('Endpoint error');
-          msg.textContent='Thanks! You\'re on the list.'; msg.className='text-xs mt-2 text-emerald-300';
-          input.value='';
-        } else {
-          const d = getData();
-          if(!d.emails.includes(email)) d.emails.push(email);
-          setData(d);
-          msg.innerHTML = 'Saved locally. <span class="text-slate-300">(Add an EMAIL_POST_ENDPOINT later to sync.)</span>';
-          msg.className='text-xs mt-2 text-amber-300';
-          input.value='';
-        }
-      }catch(err){
-        msg.textContent='Could not submit right now. Try again later.'; msg.className='text-xs mt-2 text-red-300';
-      }
-    }
-
-    function render(d){
-      const a = Number(d?.totals?.before)||0; const b = Number(d?.totals?.after)||0; const sum=(a+b)||1;
-      $('beforePct').textContent = fmtPct(a/sum); $('afterPct').textContent = fmtPct(b/sum);
-      $('beforeVotes').textContent = a + (a===1?' vote':' votes'); $('afterVotes').textContent = b + (b===1?' vote':' votes');
-      $('totals').textContent = a + ' : ' + b; $('yourVote').textContent = d?.user?.vote ? (d.user.vote==='before'?'Before':'After') : '—';
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
     }
 
     document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
-
