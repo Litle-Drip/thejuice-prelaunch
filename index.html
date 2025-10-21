@@ -14,6 +14,11 @@
     .before-card { background: rgba(0,255,150,0.1); border: 1px solid rgba(0,255,150,0.3); }
     .after-card { background: rgba(255,100,100,0.1); border: 1px solid rgba(255,100,100,0.3); }
   </style>
+  <style>
+  @media (max-width: 480px){
+    .grid { gap: .5rem; }
+  }
+</style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-6">
   <main class="max-w-3xl w-full">
@@ -40,6 +45,23 @@
         <p class="text-sm text-slate-400">We think it slips past the countdown.</p>
       </div>
     </div>
+<!-- Email capture -->
+<form id="emailForm" class="mt-6 max-w-xl mx-auto flex gap-2" novalidate>
+  <input id="emailInput" type="email" required
+         placeholder="Enter email for early access"
+         class="flex-1 rounded-lg px-3 py-2 bg-white/10 border border-white/20 text-white placeholder-white/50">
+  <button class="rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white">Notify me</button>
+</form>
+<p id="emailMsg" class="mt-2 text-center text-xs text-slate-400"></p>
+<!-- Share + QR -->
+<div class="mt-4 flex items-center justify-center gap-3">
+  <button id="copyLink"
+          class="rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">
+    Copy page link
+  </button>
+  <canvas id="qr" width="96" height="96"
+          class="rounded-lg border border-white/20 bg-white/5"></canvas>
+</div>
 
     <p class="text-center text-slate-400 text-sm">“The Juice is on‑chain.” • “No bookie. Just code.”</p>
   </main>
@@ -80,5 +102,121 @@
 
     document.addEventListener('DOMContentLoaded', init);
   </script>
+  <script>
+  // === CONFIG you can edit ===
+  const LAUNCH_UTC = '2025-12-31T23:59:59Z';
+  const EMAIL_POST_ENDPOINT = ""; // e.g. "https://formspree.io/f/xxxxxx" (leave blank = local storage only)
+  // ===========================
+
+  function parseDeadline(s){
+    let d = new Date(s);
+    if (isNaN(d)) { try { d = new Date(String(s).replace(/-/g,'/').replace('T',' ').replace('Z',' UTC')); } catch(e){} }
+    if (isNaN(d)) {
+      const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z?/);
+      if (m) d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]));
+    }
+    if (isNaN(d)) d = new Date(Date.now() + 90*24*60*60*1000);
+    return d;
+  }
+
+  // Countdown
+  function startCountdown(deadline){
+    const $ = (id)=>document.getElementById(id);
+    function update(){
+      const now = new Date();
+      let diff = Math.max(0, deadline - now);
+      const days = Math.floor(diff / 86400000); diff -= days*86400000;
+      const hours = Math.floor(diff / 3600000); diff -= hours*3600000;
+      const minutes = Math.floor(diff / 60000); diff -= minutes*60000;
+      const seconds = Math.floor(diff / 1000);
+      $('d').textContent = days;
+      $('h').textContent = hours;
+      $('m').textContent = minutes;
+      $('s').textContent = seconds;
+    }
+    update();
+    setInterval(update, 1000);
+  }
+
+  // Email capture
+  async function setupEmail(){
+    const form = document.getElementById('emailForm');
+    if(!form) return;
+    const input = document.getElementById('emailInput');
+    const msg   = document.getElementById('emailMsg');
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const email = (input.value||"").trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+        msg.textContent = "Please enter a valid email.";
+        msg.style.color = "#fda4af"; // red-300
+        return;
+      }
+      try{
+        if(EMAIL_POST_ENDPOINT){
+          const r = await fetch(EMAIL_POST_ENDPOINT,{
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({ email, ts:new Date().toISOString(), source:"thejuice-prelaunch" })
+          });
+          if(!r.ok) throw new Error();
+          msg.textContent = "Thanks! You’re on the list.";
+          msg.style.color = "#86efac"; // green-300
+          input.value = "";
+        }else{
+          const k="thejuice_emails"; const list = JSON.parse(localStorage.getItem(k)||"[]");
+          if(!list.includes(email)) list.push(email);
+          localStorage.setItem(k, JSON.stringify(list));
+          msg.textContent = "Saved locally. Add EMAIL_POST_ENDPOINT later to sync.";
+          msg.style.color = "#fde68a"; // amber-300
+          input.value = "";
+        }
+      }catch{
+        msg.textContent = "Could not submit right now.";
+        msg.style.color = "#fda4af";
+      }
+    });
+  }
+
+  // QR with fallbacks (Google → qrserver → QuickChart)
+  function drawQR(text, size, canvas){
+    if(!canvas) return;
+    const srcs = [
+      `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}`,
+      `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`,
+      `https://quickchart.io/qr?size=${size}&text=${encodeURIComponent(text)}`
+    ];
+    const ctx = canvas.getContext('2d');
+    let i=0, t;
+    const img = new Image(); img.crossOrigin="anonymous";
+    img.onload = ()=>{ clearTimeout(t); ctx.drawImage(img,0,0,size,size); };
+    img.onerror = ()=>{ if(i<srcs.length-1){ i++; load(); } };
+    function load(){ img.src = srcs[i]; t=setTimeout(()=>img.onerror(), 2500); }
+    load();
+  }
+
+  // Copy link
+  function setupCopyLink(){
+    const btn = document.getElementById('copyLink');
+    if(!btn) return;
+    btn.addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(location.href); }catch{}
+    });
+  }
+
+  // Init
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const deadline = parseDeadline(LAUNCH_UTC);
+    const lbl = document.getElementById('deadlineLabel');
+    if(lbl) lbl.textContent = deadline.toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'});
+
+    startCountdown(deadline);
+    setupEmail();
+    setupCopyLink();
+    drawQR(location.href, 96, document.getElementById('qr'));
+  });
+</script>
+
 </body>
 </html>
