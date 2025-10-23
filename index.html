@@ -10,6 +10,9 @@
   <meta property="og:description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
   <meta property="og:url" content="https://thejuice.xyz/" />
   <meta property="og:image" content="/og.png" />
+  <!-- Favicon (embedded data URL so you don't need to upload anything yet) -->
+  <link rel="icon" type="image/svg+xml" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="%2300E6F6" offset="0"/><stop stop-color="%2310B3C8" offset="1"/></linearGradient></defs><rect width="64" height="64" rx="12" fill="%230b1220"/><path d="M20 42c4 4 12 4 16 0 4-4 4-10 0-14-4-4-10-4-14 0" fill="none" stroke="url(%23g)" stroke-width="6" stroke-linecap="round"/><path d="M28 22c-4 0-8 2-10 6" fill="none" stroke="url(%23g)" stroke-width="6" stroke-linecap="round"/></svg>'/>
+  <link rel="apple-touch-icon" href="/og.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="TheJuice — Pre‑Launch Bet" />
   <meta name="twitter:description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
@@ -35,6 +38,10 @@
     .selected { outline: 2px solid #00E6F6; outline-offset: 2px; }
     .grid-gap { gap: 1.25rem; }
   </style>
+  <script>
+    // === Email capture config ===
+    const EMAIL_POST_ENDPOINT = 'https://formspree.io/f/xwprjbqj';
+  </script>
 </head>
 <body class="min-h-screen">
   <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
@@ -181,6 +188,44 @@
       render(getData());
       // draw QR of current page
       drawQR(location.href, 96, document.getElementById('qr'));
+    });
+      function setupEmail(){
+      const form=document.getElementById('emailForm');
+      const input=document.getElementById('emailInput');
+      const btn=document.getElementById('notifyBtn');
+      const msg=document.getElementById('emailMsg');
+      if(!form||!EMAIL_POST_ENDPOINT) return;
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const email=(input.value||'').trim();
+        if(!email){ msg.textContent='Please enter a valid email.'; msg.className='text-xs text-rose-300'; return; }
+        btn.disabled=true; btn.textContent='Sending…'; msg.textContent='';
+        try{
+          const res = await fetch(EMAIL_POST_ENDPOINT,{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ email })
+          });
+          if(res.ok){
+            msg.textContent='Thanks! You\'re on the list.'; msg.className='text-xs text-emerald-300';
+            input.value='';
+          }else{
+            msg.textContent='Could not submit right now. Try again shortly.'; msg.className='text-xs text-rose-300';
+          }
+        }catch(_){
+          msg.textContent='Network error. Please try again.'; msg.className='text-xs text-rose-300';
+        }finally{ btn.disabled=false; btn.textContent='Notify me'; }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      const deadline=parseDeadline(LAUNCH_UTC);
+      document.getElementById('deadlineLabel').textContent=deadline.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+      startCountdown(deadline);
+      document.getElementById('btnBefore').onclick=()=>vote('before');
+      document.getElementById('btnAfter').onclick=()=>vote('after');
+      render(getData());
+      drawQR(location.href, 96, document.getElementById('qr'));
+      setupEmail();
     });
   </script>
 </body>
