@@ -161,7 +161,7 @@
       <p id="voteStatus" class="text-xs text-center text-slate-400 min-h-[1.25rem]" aria-live="polite">Local mode: totals are per-device only.</p>
 
       <!-- Parallel row: Email + Notify | Copy link | Page QR -->
-<div class="grid gap-4 items-center md:grid-cols-[1fr_auto_auto]">
+<div class="grid gap-4 items-center md:grid-cols-[1fr_auto_auto] mt-4 -mb-2">
   <!-- Email + Notify -->
   <form id="emailForm" class="w-full">
     <div class="flex gap-2 w-full">
@@ -228,24 +228,6 @@
     </div>
   </div>
 </div>
-
-      <!-- Donate to Treasury (HTML must be OUTSIDE any <script>) -->
-      <div class="glass rounded-2xl p-5 mt-6">
-        <div class="flex items-start gap-4 flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <div class="text-lg font-semibold">Support the launch</div>
-            <p class="text-slate-400 text-sm">
-              Send <strong>ETH</strong> or any <strong>ERC-20</strong> token to our treasury address.
-            </p>
-            <div class="mt-2">
-              <code id="treasuryText" class="text-xs bg-white/5 border border-white/10 rounded px-2 py-1 break-all"></code>
-            </div>
-            <div class="flex gap-2 mt-3">
-              <button id="copyTreasury" class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">Copy address</button>
-              <a id="openInWallet" class="btn rounded-lg px-3 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" href="#" rel="noopener">Open in wallet</a>
-              <!-- Optional preset -->
-              <!-- <a class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15" href="ethereum:0x5a0d1c4b58dbea38471841053de97cb158f19a6e?value=10000000000000000">Donate 0.01 ETH</a> -->
-            </div>
             <p class="text-xs text-slate-500 mt-2">Tip: most wallets accept the QR below or pasting the address.</p>
           </div>
           <div class="mt-4 md:mt-0">
