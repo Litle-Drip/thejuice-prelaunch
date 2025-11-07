@@ -797,5 +797,86 @@ window.addEventListener('DOMContentLoaded', () => {
   window.refreshTotals({showStatus:true});
 });
 </script>
+  <script>
+/* Force local vote handler + UI sync (non-breaking, id/selector flexible) */
+(function(){
+  const LSK_BEFORE='local_totals_before', LSK_AFTER='local_totals_after', LSK_VOTE='userVote';
+
+  function initKeys(){
+    try{
+      if(!localStorage.getItem(LSK_BEFORE)) localStorage.setItem(LSK_BEFORE,'0');
+      if(!localStorage.getItem(LSK_AFTER))  localStorage.setItem(LSK_AFTER,'0');
+      const v = localStorage.getItem(LSK_VOTE);
+      window.state = window.state || { totals:{before:0,after:0}, userVote: (v==='before'||v==='after')?v:null };
+    }catch(_){ window.state = window.state || { totals:{before:0,after:0}, userVote:null }; }
+  }
+
+  function readTotals(){
+    return {
+      before: parseInt(localStorage.getItem(LSK_BEFORE)||'0',10)||0,
+      after:  parseInt(localStorage.getItem(LSK_AFTER)||'0',10)||0
+    };
+  }
+
+  async function updateCounter(side, delta){
+    const key = side==='before' ? LSK_BEFORE : LSK_AFTER;
+    const cur = parseInt(localStorage.getItem(key)||'0',10)||0;
+    const next = Math.max(0, cur + delta);
+    localStorage.setItem(key, String(next));
+    return next;
+  }
+
+  function renderSafe(){
+    const t = readTotals(); const sum = t.before + t.after;
+
+    // IDs if present
+    const id=s=>document.getElementById(s);
+    if(id('beforeVotes')) id('beforeVotes').textContent = `${t.before} ${t.before===1?'vote':'votes'}`;
+    if(id('afterVotes'))  id('afterVotes').textContent  = `${t.after} ${t.after===1?'vote':'votes'}`;
+    if(id('totals'))      id('totals').textContent      = `${t.before} : ${t.after}  •  Total ${sum}`;
+
+    // Fallback: find the visible "votes" text nodes and update them
+    const voteTexts = [...document.querySelectorAll('div,span,small,p')].filter(n=>{
+      const s=(n.textContent||'').trim().toLowerCase(); return /(^|\s)\d+\s+votes?$/.test(s) || s==='0 votes';
+    });
+    if(voteTexts.length>=2){
+      voteTexts[0].textContent = `${t.before} ${t.before===1?'vote':'votes'}`;
+      voteTexts[1].textContent = `${t.after} ${t.after===1?'vote':'votes'}`;
+    }
+
+    // Call original render last (if you want its visuals)
+    try{ typeof window.render==='function' && window.render(); }catch(_){}
+  }
+
+  // Our vote always wins
+  window.vote = async function(side){
+    if(side!=='before' && side!=='after') return;
+    const prev = window.state?.userVote;
+    if(prev === side){ window.setVoteStatus?.('You already picked that side.','info'); return; }
+    if(prev) await updateCounter(prev, -1);
+    await updateCounter(side, +1);
+    window.state.userVote = side;
+    try{ localStorage.setItem(LSK_VOTE, side); }catch(_){}
+    renderSafe();
+    window.setVoteStatus?.('Vote recorded!','success');
+  };
+
+  function wireButtons(){
+    const id=s=>document.getElementById(s);
+    const btnBefore = id('btnBefore') || [...document.querySelectorAll('button')].find(b=>(b.textContent||'').toLowerCase().includes('before'));
+    const btnAfter  = id('btnAfter')  || [...document.querySelectorAll('button')].find(b=>(b.textContent||'').toLowerCase().includes('after'));
+    if(btnBefore){ btnBefore.onclick = e=>{ e?.preventDefault?.(); window.vote('before'); }; btnBefore.removeAttribute('disabled'); }
+    if(btnAfter){  btnAfter.onclick  = e=>{ e?.preventDefault?.(); window.vote('after');  }; btnAfter.removeAttribute('disabled'); }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initKeys();
+    wireButtons();
+    renderSafe();
+    // keep UI synced if other code rewrites text
+    setInterval(renderSafe, 2000);
+  });
+})();
+</script>
 </body>
 </html>
