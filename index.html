@@ -190,10 +190,11 @@
   </div>
   
  <!-- Page QR -->
-  <div class="flex justify-center">
- <canvas id="qr" width="156" height="156" 
-   class="rounded-2xl border border-white/20 bg-white p-3 shadow-xl"></canvas>
+<div class="flex items-center justify-center mt-1">
+  <div class="w-[140px] h-[140px] rounded-2xl border border-white/20 bg-white p-2 shadow-xl flex items-center justify-center">
+    <canvas id="qr" width="120" height="120"></canvas>
   </div>
+</div>
 </div>
 
 <!-- Donate to Treasury (moved up, sits right under the row) -->
@@ -408,7 +409,7 @@
 
       initLocal();
       render();
-      drawQR(location.href,96,document.getElementById('qr'));
+      drawQR(location.href,120,document.getElementById('qr'));
 
       // --- Treasury QR & wallet detection + helpers ---
 const addr   = TREASURY_ADDR.trim();
