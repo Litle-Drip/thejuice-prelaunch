@@ -56,6 +56,27 @@
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     .selected { outline: 2px solid #00E6F6; outline-offset: 2px; }
     .grid-gap { gap: 1.25rem; }
+    /* Email input styling for dark mode */
+#emailInput{
+  background: rgba(15,23,42,.8);         /* slate-900-ish */
+  border: 1px solid rgba(255,255,255,.12);
+  color: #e5e7eb;                         /* text-slate-200 */
+  caret-color: #e5e7eb;
+  border-radius: .5rem;
+}
+#emailInput::placeholder{ color: #94a3b8; } /* text-slate-400 */
+#emailInput:focus{
+  outline: none;
+  border-color: rgba(0,230,246,.5);
+  box-shadow: 0 0 0 3px rgba(0,230,246,.15);
+}
+
+/* Fix Chrome/Safari autofill yellow on dark backgrounds */
+#emailInput:-webkit-autofill{
+  -webkit-text-fill-color:#e5e7eb !important;
+  -webkit-box-shadow: 0 0 0 30px rgba(15,23,42,.95) inset !important;
+  caret-color:#e5e7eb;
+}
   </style>
 
   <script>
@@ -341,22 +362,38 @@
       drawQR(location.href,96,document.getElementById('qr'));
 
       // --- Treasury QR & buttons ---
-      const addr  = TREASURY_ADDR.trim();
-      const ethUri = `ethereum:${addr}`;
+const addr   = TREASURY_ADDR.trim();
+const ethUri = `ethereum:${addr}`;
 
-      const tText = document.getElementById('treasuryText');
-      if (tText) tText.textContent = addr;
+// UI text
+const tText = document.getElementById('treasuryText');
+if (tText) tText.textContent = addr;
 
-      const aWallet = document.getElementById('openInWallet');
-      if (aWallet) {
-        aWallet.href = ethUri;
-        aWallet.setAttribute('target', '_self');
-        aWallet.setAttribute('rel', 'noopener');
-        const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
-        aWallet.textContent = `Open in wallet (${short})`;
-      }
+// Link + fallback
+const aWallet = document.getElementById('openInWallet');
+if (aWallet) {
+  aWallet.href = ethUri;                 // primary: custom scheme
+  aWallet.removeAttribute('target');     // default _self
+  aWallet.setAttribute('rel','noopener');
 
-      drawQR(ethUri, 160, document.getElementById('qrDonate'));
+  // Show a short label
+  const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
+  aWallet.textContent = `Open in wallet (${short})`;
+
+  // Click fallback: try custom scheme, then open common wallet apps
+  aWallet.addEventListener('click', (e)=>{
+    // Let the browser try the href first; after a small delay, try app links
+    setTimeout(()=>{
+      // MetaMask (opens app; user will paste the address)
+      window.location.href = 'https://metamask.app.link/';
+      // Coinbase Wallet (opens app)
+      setTimeout(()=>{ window.location.href = 'https://go.cb-w.com/'; }, 700);
+    }, 700);
+  }, {passive:true});
+}
+
+// Draw donation QR (keep 160 to be easy to scan)
+drawQR(ethUri, 160, document.getElementById('qrDonate'));
 
       const copyBtn = document.getElementById('copyTreasury');
       if (copyBtn) {
