@@ -1,1 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TheJuice — Pre-Launch Bet</title>
+  <meta name="description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
+  <meta name="theme-color" content="#0b1220" />
+  <meta property="og:title" content="TheJuice — Pre-Launch Bet" />
+  <meta property="og:description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
+  <meta property="og:url" content="https://thejuice.xyz/" />
+  <meta property="og:image" content="/og.png" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TheJuice — Pre-Launch Bet" />
+  <meta name="twitter:description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
+  <meta name="twitter:image" content="/og.png" />
+  <link rel="canonical" href="https://thejuice.xyz/" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer data-domain="thejuice.xyz" src="https://plausible.io/js/script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
+  <!-- Kill Switch: stub external fetches so nothing noisy hits the network -->
+  <script>
+  window.FORCE_LOCAL_VOTES = true;
+  (function(){
+    const origFetch = window.fetch;
+    window.fetch = function(input, init){
+      const url = (typeof input === 'string') ? input : (input && input.url) || '';
+      if (/(^|\/\/)(api\.)?countapi\.xyz/i.test(url)) {
+        return Promise.resolve(new Response(JSON.stringify({ value: 0 }),{status:200,headers:{'Content-Type':'application/json'}}));
+      }
+      if (/charts\.googleapis\.com/i.test(url)) {
+        return Promise.resolve(new Response('', { status: 204 }));
+      }
+      return origFetch.apply(this, arguments);
+    };
+  })();
+  </script>
+
+  <style>
+    body {
+      background:
+        radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,.12), transparent 40%),
+        radial-gradient(1000px 700px at 90% 0%, rgba(255,215,0,.08), transparent 45%),
+        #0b1220;
+      color:#fff;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial
+    }
+    .glass { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .digit { font-variant-numeric: tabular-nums; letter-spacing:.25px; transition: transform .2s ease, color .2s ease; }
+    .pulse { transform: scale(1.05); color: #00E6F6; }
+    .progress { height:6px; border-radius:9999px; background: rgba(255,255,255,.08); overflow:hidden; position: relative; }
+    .progress > span { display:block; height:100%; background: linear-gradient(90deg, rgba(0,230,246,0.3), rgba(0,230,246,0.6), rgba(0,230,246,0.3)); background-size:200% 100%; animation: shimmer 4s infinite linear; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .selected { outline: 2px solid #00E6F6; outline-offset: 2px; }
+    .grid-gap { gap: 1.25rem; }
+    /* Email input styling for dark mode */
+#emailInput{
+  background: rgba(15,23,42,.8);         /* slate-900-ish */
+  border: 1px solid rgba(255,255,255,.12);
+  color: #e5e7eb;                         /* text-slate-200 */
+  caret-color: #e5e7eb;
+  border-radius: .5rem;
+}
+#emailInput::placeholder{ color: #94a3b8; } /* text-slate-400 */
+#emailInput:focus{
+  outline: none;
+  border-color: rgba(0,230,246,.5);
+  box-shadow: 0 0 0 3px rgba(0,230,246,.15);
+}
+
+/* Fix Chrome/Safari autofill yellow on dark backgrounds */
+#emailInput:-webkit-autofill{
+  -webkit-text-fill-color:#e5e7eb !important;
+  -webkit-box-shadow: 0 0 0 30px rgba(15,23,42,.95) inset !important;
+  caret-color:#e5e7eb;
+}
+  </style>
+
+  <script>
+    // === Email capture config ===
+    const EMAIL_POST_ENDPOINT = 'https://formspree.io/f/xwprjbqj';
+    // === Treasury (ETH + ERC-20) donation address ===
+    const TREASURY_ADDR = '0x5a0d1c4b58dbea38471841053de97cb158f19a6e';
+  </script>
+</head>
+
+<body class="min-h-screen">
+  <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+    <header class="text-center space-y-3">
+      <h1 class="text-4xl font-bold tracking-tight">TheJuice — Pre-Launch Bet</h1>
+      <p class="text-cyan-400 text-sm">The first ever bet on The Juice… was The Juice itself</p>
+    </header>
+
+    <section class="glass rounded-2xl p-8 space-y-10">
+      <div class="text-center space-y-3">
+        <h2 class="text-3xl font-semibold">Will The Juice launch before <span id="deadlineLabel"></span>?</h2>
+        <p class="text-slate-300">No bookie. Just code. (Pre-launch demo — real escrow + wallets go live at launch.)</p>
+      </div>
+
+      <div id="countdown" class="grid grid-cols-2 md:grid-cols-4 gap-4 justify-center">
+        <div class="glass rounded-xl p-4 text-center"><div id="d" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Days</div></div>
+        <div class="glass rounded-xl p-4 text-center"><div id="h" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Hours</div></div>
+        <div class="glass rounded-xl p-4 text-center"><div id="m" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Minutes</div></div>
+        <div class="glass rounded-xl p-4 text-center"><div id="s" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Seconds</div></div>
+      </div>
+
+      <div class="grid md:grid-cols-2 grid-gap">
+        <button id="btnBefore" class="rounded-xl p-4 text-left bg-green-400/10 border border-green-300/20 hover:bg-green-400/20">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-green-300 font-medium">Before deadline</div>
+              <div class="text-slate-400 text-sm">I believe we ship before the countdown ends.</div>
+            </div>
+            <div class="text-right">
+              <div id="beforePct" class="text-lg font-semibold">0%</div>
+              <div id="beforeVotes" class="text-xs text-slate-400">0 votes</div>
+            </div>
+          </div>
+          <div class="progress mt-3"><span id="beforeBar" style="width:0%"></span></div>
+        </button>
+        <button id="btnAfter" class="rounded-xl p-4 text-left bg-red-400/10 border border-red-300/20 hover:bg-red-400/20">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-red-300 font-medium">After deadline</div>
+              <div class="text-slate-400 text-sm">We think it slips past the countdown.</div>
+            </div>
+            <div class="text-right">
+              <div id="afterPct" class="text-lg font-semibold">0%</div>
+              <div id="afterVotes" class="text-xs text-slate-400">0 votes</div>
+            </div>
+          </div>
+          <div class="progress mt-3"><span id="afterBar" style="width:0%"></span></div>
+        </button>
+      </div>
+
+      <div class="grid md:grid-cols-3 grid-gap">
+        <div class="glass rounded-xl p-3 text-center"><div class="text-xs text-slate-300">Your vote</div><div id="yourVote" class="text-sm font-medium">—</div></div>
+        <div class="glass rounded-xl p-3 md:col-span-2 text-center"><div class="text-xs text-slate-300">Totals</div><div id="totals" class="text-sm font-medium">0 : 0</div></div>
+      </div>
+
+      <p id="voteStatus" class="text-xs text-center text-slate-400 min-h-[1.25rem]" aria-live="polite">Local mode: totals are per-device only.</p>
+
+      <form id="emailForm" class="max-w-md mx-auto space-y-2">
+        <div class="flex gap-2">
+          <input id="emailInput" type="email" placeholder="Enter email for early access" class="input flex-1 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 text-white focus:outline-none" required>
+          <button id="notifyBtn" class="btn rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" type="submit">Notify me</button>
+        </div>
+        <p id="emailMsg" class="text-xs text-slate-400"></p>
+      </form>
+
+      <div class="flex items-center justify-center gap-3">
+        <button id="copyLink" class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">Copy page link</button>
+        <span id="copyToast" class="text-xs text-emerald-300 opacity-0 transition-opacity">Copied ✓</span>
+        <canvas id="qr" width="96" height="96" class="rounded-lg border border-white/20 bg-white/5"></canvas>
+      </div>
+
+      <!-- Donate to Treasury (HTML must be OUTSIDE any <script>) -->
+      <div class="glass rounded-2xl p-5 mt-6">
+        <div class="flex items-start gap-4 flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <div class="text-lg font-semibold">Support the launch</div>
+            <p class="text-slate-400 text-sm">
+              Send <strong>ETH</strong> or any <strong>ERC-20</strong> token to our treasury address.
+            </p>
+            <div class="mt-2">
+              <code id="treasuryText" class="text-xs bg-white/5 border border-white/10 rounded px-2 py-1 break-all"></code>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <button id="copyTreasury" class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">Copy address</button>
+              <a id="openInWallet" class="btn rounded-lg px-3 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" href="#" rel="noopener">Open in wallet</a>
+              <!-- Optional preset -->
+              <!-- <a class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15" href="ethereum:0x5a0d1c4b58dbea38471841053de97cb158f19a6e?value=10000000000000000">Donate 0.01 ETH</a> -->
+            </div>
+            <p class="text-xs text-slate-500 mt-2">Tip: most wallets accept the QR below or pasting the address.</p>
+          </div>
+          <div class="mt-4 md:mt-0">
+            <canvas id="qrDonate" width="160" height="160" class="rounded-lg border border-white/20 bg-white/5"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-slate-400 text-xs text-center">Pre-launch demo: votes are visual only. On launch, bets will be on-chain (Base) with trustless escrow and a protocol fee (min 2.5%).</p>
+    </section>
+  </main>
+
+  <!-- Core logic: countdown, QR, local-only votes -->
+  <script>
+    /* ---------- Countdown ---------- */
+    const LAUNCH_UTC = '2025-12-31T23:59:59Z';
+    function parseDeadline(s){ return new Date(s); }
+    function startCountdown(deadline){
+      const ids=['d','h','m','s'];
+      function update(){
+        const now=new Date(); let diff=Math.max(0,deadline-now);
+        const d=Math.floor(diff/86400000); diff-=d*86400000;
+        const h=Math.floor(diff/3600000); diff-=h*3600000;
+        const m=Math.floor(diff/60000); diff-=m*60000;
+        const s=Math.floor(diff/1000);
+        [d,h,m,s].forEach((v,i)=>document.getElementById(ids[i]).textContent=v);
+      }
+      update();
+      let ticks=0;
+      setInterval(()=>{update(); if(++ticks%10===0){ document.querySelectorAll('.digit').forEach(el=>{ el.classList.add('pulse'); setTimeout(()=>el.classList.remove('pulse'),300); });}},1000);
+    }
+
+    /* ---------- QR generator (fallback-safe) ---------- */
+    function drawQR(text, size, canvas){
+      if(!canvas) return;
+      const srcs=[
+        `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}`,
+        `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`,
+        `https://quickchart.io/qr?size=${size}&text=${encodeURIComponent(text)}`
+      ];
+      const ctx=canvas.getContext('2d');
+      let i=0, t; const img=new Image(); img.crossOrigin='anonymous';
+      img.onload=()=>{ clearTimeout(t); ctx.clearRect(0,0,size,size); ctx.drawImage(img,0,0,size,size); };
+      img.onerror=()=>{ if(i<srcs.length-1){ i++; load(); } };
+      function load(){ img.src=srcs[i]; t=setTimeout(()=>img.onerror(), 2500); }
+      load();
+    }
+
+    function confettiLaunch(){ try{ confetti({ particleCount:100, spread:70, origin:{y:0.6} }); }catch(_){ } }
+
+    /* ---------- Local vote store (per-device) ---------- */
+    const LSK_BEFORE='local_totals_before';
+    const LSK_AFTER='local_totals_after';
+    const LSK_VOTE='userVote';
+
+    const state={ totals:{before:0,after:0}, userVote:null };
+
+    function setVoteStatus(message='', tone='muted'){
+      const el=document.getElementById('voteStatus');
+      if(!el) return;
+      const toneClass={ muted:'text-slate-400', info:'text-cyan-300', success:'text-emerald-300', error:'text-rose-300' }[tone]||'text-slate-400';
+      el.className=`text-xs text-center min-h-[1.25rem] mt-1 ${toneClass}`;
+      el.textContent=message;
+    }
+
+    function initLocal(){
+      try{
+        if(!localStorage.getItem(LSK_BEFORE)) localStorage.setItem(LSK_BEFORE,'0');
+        if(!localStorage.getItem(LSK_AFTER))  localStorage.setItem(LSK_AFTER,'0');
+        const v=localStorage.getItem(LSK_VOTE);
+        if(v==='before'||v==='after') state.userVote=v;
+      }catch(_){ /* ignore */ }
+    }
+
+    function readTotals(){
+      return {
+        before: parseInt(localStorage.getItem(LSK_BEFORE)||'0',10) || 0,
+        after:  parseInt(localStorage.getItem(LSK_AFTER)||'0',10)  || 0
+      };
+    }
+
+    function render(){
+      const t = readTotals(); state.totals=t;
+      const before=t.before, after=t.after, sum=before+after;
+      const beforePct = sum>0 ? (before/sum)*100 : 0;
+      const afterPct  = sum>0 ? (after /sum)*100 : 0;
+
+      const set = (id,txt)=>{ const el=document.getElementById(id); if(el) el.textContent=txt; };
+      const w   = (id,p)=>{ const el=document.getElementById(id); if(el) el.style.width=p+'%'; };
+
+      set('beforePct', beforePct.toFixed(1)+'%');
+      set('afterPct',  afterPct.toFixed(1)+'%');
+      set('beforeVotes', `${before} vote${before===1?'':'s'}`);
+      set('afterVotes',  `${after} vote${after===1?'':'s'}`);
+      set('totals', `${before} : ${after}`);
+
+      w('beforeBar', beforePct);
+      w('afterBar',  afterPct);
+
+      const label = state.userVote ? ({before:'Before deadline', after:'After deadline'}[state.userVote]) : '—';
+      set('yourVote', label);
+
+      [['btnBefore','before'],['btnAfter','after']].forEach(([id,side])=>{
+        const btn=document.getElementById(id);
+        if(!btn) return;
+        const pressed = state.userVote===side;
+        btn.classList.toggle('selected', pressed);
+        btn.setAttribute('aria-pressed', pressed);
+      });
+    }
+
+    async function updateCounterLocal(side, delta){
+      const key = side==='before'?LSK_BEFORE:LSK_AFTER;
+      const cur = parseInt(localStorage.getItem(key)||'0',10) || 0;
+      const next = Math.max(0, cur + delta);
+      try{ localStorage.setItem(key, String(next)); }catch(_){}
+      return next;
+    }
+
+    async function vote(side){
+      if(!['before','after'].includes(side)) return;
+      const prev = state.userVote;
+      if(prev === side){ setVoteStatus('You already picked that side.','info'); return; }
+      if(prev) await updateCounterLocal(prev, -1);
+      await updateCounterLocal(side, +1);
+      state.userVote = side;
+      try{ localStorage.setItem(LSK_VOTE, side); }catch(_){}
+      render();
+      setVoteStatus('Vote recorded!','success');
+      if(!prev) confettiLaunch();
+    }
+
+    /* ---------- Email + Copy ---------- */
+    function setupEmail(){
+      const form=document.getElementById('emailForm');
+      const input=document.getElementById('emailInput');
+      const btn=document.getElementById('notifyBtn');
+      const msg=document.getElementById('emailMsg');
+      if(!form||!EMAIL_POST_ENDPOINT) return;
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const email=(input.value||'').trim();
+        if(!email){ msg.textContent='Please enter a valid email.'; msg.className='text-xs text-rose-300'; return; }
+        btn.disabled=true; btn.textContent='Sending…'; msg.textContent='';
+        try{
+          const res = await fetch(EMAIL_POST_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({ email })});
+          if(res.ok){ msg.textContent='Thanks! You\'re on the list.'; msg.className='text-xs text-emerald-300'; input.value=''; }
+          else      { msg.textContent='Could not submit right now. Try again shortly.'; msg.className='text-xs text-rose-300'; }
+        }catch(_){ msg.textContent='Network error. Please try again.'; msg.className='text-xs text-rose-300'; }
+        finally{ btn.disabled=false; btn.textContent='Notify me'; }
+      });
+    }
+
+    function setupCopy(){
+      const copyButton=document.getElementById('copyLink');
+      const copyToast=document.getElementById('copyToast');
+      if(!copyButton) return;
+      copyButton.addEventListener('click',async(e)=>{
+        e.preventDefault();
+        try{
+          const url=location.href;
+          if(navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+          else {
+            const ta=document.createElement('textarea');
+            ta.value=url; ta.setAttribute('readonly',''); ta.style.position='absolute'; ta.style.left='-9999px';
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+          }
+          if(copyToast){ copyToast.textContent='Copied ✓'; copyToast.classList.remove('opacity-0'); copyToast.classList.add('opacity-100'); setTimeout(()=>{ copyToast.classList.add('opacity-0'); copyToast.classList.remove('opacity-100'); },1500); }
+        }catch(_){
+          if(copyToast){ copyToast.textContent='Copy failed'; copyToast.classList.remove('opacity-0'); copyToast.classList.add('opacity-100','text-rose-300'); setTimeout(()=>{ copyToast.classList.add('opacity-0'); copyToast.classList.remove('opacity-100','text-rose-300'); copyToast.textContent='Copied ✓'; },2000); }
+        }
+      });
+    }
+
+    /* ---------- Boot ---------- */
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const deadline=parseDeadline(LAUNCH_UTC);
+      document.getElementById('deadlineLabel').textContent = deadline.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+      startCountdown(deadline);
+
+      document.getElementById('btnBefore').addEventListener('click',()=>vote('before'));
+      document.getElementById('btnAfter').addEventListener('click',()=>vote('after'));
+
+      initLocal();
+      render();
+      drawQR(location.href,96,document.getElementById('qr'));
+
+      // --- Treasury QR & wallet detection + helpers ---
+const addr   = TREASURY_ADDR.trim();
+const ethUri = `ethereum:${addr}`;
+
+// Put the address text in the UI
+const tText = document.getElementById('treasuryText');
+if (tText) tText.textContent = addr;
+
+// Detect EIP-1193 providers (multiple can exist)
+function allProviders() {
+  const eth = window.ethereum;
+  let list = [];
+  if (!eth) return list;
+  if (Array.isArray(eth.providers)) list = eth.providers.slice();
+  if (!list.length) list = [eth];
+  return list.filter(Boolean);
+}
+function detectWallet() {
+  const ps = allProviders();
+  const flags = {
+    metamask: ps.some(p => p.isMetaMask),
+    coinbase: ps.some(p => p.isCoinbaseWallet || p.providerName === 'CoinbaseWallet'),
+    brave:    ps.some(p => p.isBraveWallet),
+    phantom:  (window.phantom?.solana) || ps.some(p => p.isPhantom)
+  };
+  // choose a “best” label to show on the button
+  const label =
+    flags.metamask ? 'MetaMask' :
+    flags.coinbase ? 'Coinbase Wallet' :
+    flags.brave    ? 'Brave Wallet' :
+    flags.phantom  ? 'Phantom' :
+    null;
+  return { flags, label, providers: ps };
+}
+
+// Button behavior
+const aWallet = document.getElementById('openInWallet');
+if (aWallet) {
+  const d = detectWallet();
+
+  // Show which wallet we detected (if any)
+  const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
+  aWallet.textContent = d.label ? `Open ${d.label} (${short})` : `Open in wallet (${short})`;
+
+  // Keep ethereum: URI for mobile/native handlers
+  aWallet.href = ethUri;
+  aWallet.removeAttribute('target');
+  aWallet.setAttribute('rel','noopener');
+
+  aWallet.addEventListener('click', async (e) => {
+    // Always copy the address first for the user
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(addr);
+    } catch (_) {}
+
+    const status = msg => setVoteStatus?.(msg, 'info');
+
+    // If we have an injected wallet, “poke” it so its popup opens,
+    // which is the fastest way for the user to hit “Send” and paste.
+    const { providers } = detectWallet();
+    const prov =
+      providers.find(p => p.isMetaMask) ||
+      providers.find(p => p.isCoinbaseWallet || p.providerName === 'CoinbaseWallet') ||
+      providers.find(p => p.isBraveWallet) ||
+      providers.find(p => p.isPhantom) ||
+      providers[0];
+
+    if (prov) {
+      try {
+        // This will either connect or at least bring the extension to the foreground.
+        await prov.request?.({ method: 'eth_requestAccounts' }).catch(()=>{});
+        status('Address copied ✓ — open your wallet’s Send, paste, choose amount.');
+        // Let the browser still try the ethereum: URI (helps on mobile)
+        setTimeout(() => { try { window.location.href = ethUri; } catch(_){} }, 250);
+        e.preventDefault(); // avoid navigating away on desktop
+        return;
+      } catch (_) {
+        // fall through to mobile deep-links
+      }
+    }
+
+    // No injected wallet available (or request failed): try mobile deep-links
+    setTimeout(() => { window.location.href = 'https://metamask.app.link/'; }, 400);
+    setTimeout(() => { window.location.href = 'https://go.cb-w.com/'; }, 1100);
+    status('Address copied ✓ — if a wallet is installed, open it and paste.');
+    // keep default href for mobile handlers; don’t preventDefault
+  }, { passive: false });
+}
+
+// Donation QR (keep 160px so phones scan instantly)
+drawQR(ethUri, 160, document.getElementById('qrDonate'));
+
+      const copyBtn = document.getElementById('copyTreasury');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async (e)=>{
+          e.preventDefault();
+          try{
+            if (navigator.clipboard?.writeText) {
+              await navigator.clipboard.writeText(addr);
+            } else {
+              const ta=document.createElement('textarea');
+              ta.value=addr; ta.setAttribute('readonly',''); ta.style.position='absolute'; ta.style.left='-9999px';
+              document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+            }
+            setVoteStatus?.('Treasury address copied ✓','success');
+          }catch(_){
+            setVoteStatus?.('Could not copy address.','error');
+          }
+        });
+      }
+
+      setupEmail();
+      setupCopy();
+      setVoteStatus('Local mode: totals are per-device only.','muted');
+    });
+  </script>
+</body>
+</html>
