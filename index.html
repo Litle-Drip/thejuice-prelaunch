@@ -361,38 +361,96 @@
       render();
       drawQR(location.href,96,document.getElementById('qr'));
 
-      // --- Treasury QR & buttons ---
+      // --- Treasury QR & wallet detection + helpers ---
 const addr   = TREASURY_ADDR.trim();
 const ethUri = `ethereum:${addr}`;
 
-// UI text
+// Put the address text in the UI
 const tText = document.getElementById('treasuryText');
 if (tText) tText.textContent = addr;
 
-// Link + fallback
-const aWallet = document.getElementById('openInWallet');
-if (aWallet) {
-  aWallet.href = ethUri;                 // primary: custom scheme
-  aWallet.removeAttribute('target');     // default _self
-  aWallet.setAttribute('rel','noopener');
-
-  // Show a short label
-  const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
-  aWallet.textContent = `Open in wallet (${short})`;
-
-  // Click fallback: try custom scheme, then open common wallet apps
-  aWallet.addEventListener('click', (e)=>{
-    // Let the browser try the href first; after a small delay, try app links
-    setTimeout(()=>{
-      // MetaMask (opens app; user will paste the address)
-      window.location.href = 'https://metamask.app.link/';
-      // Coinbase Wallet (opens app)
-      setTimeout(()=>{ window.location.href = 'https://go.cb-w.com/'; }, 700);
-    }, 700);
-  }, {passive:true});
+// Detect EIP-1193 providers (multiple can exist)
+function allProviders() {
+  const eth = window.ethereum;
+  let list = [];
+  if (!eth) return list;
+  if (Array.isArray(eth.providers)) list = eth.providers.slice();
+  if (!list.length) list = [eth];
+  return list.filter(Boolean);
+}
+function detectWallet() {
+  const ps = allProviders();
+  const flags = {
+    metamask: ps.some(p => p.isMetaMask),
+    coinbase: ps.some(p => p.isCoinbaseWallet || p.providerName === 'CoinbaseWallet'),
+    brave:    ps.some(p => p.isBraveWallet),
+    phantom:  (window.phantom?.solana) || ps.some(p => p.isPhantom)
+  };
+  // choose a “best” label to show on the button
+  const label =
+    flags.metamask ? 'MetaMask' :
+    flags.coinbase ? 'Coinbase Wallet' :
+    flags.brave    ? 'Brave Wallet' :
+    flags.phantom  ? 'Phantom' :
+    null;
+  return { flags, label, providers: ps };
 }
 
-// Draw donation QR (keep 160 to be easy to scan)
+// Button behavior
+const aWallet = document.getElementById('openInWallet');
+if (aWallet) {
+  const d = detectWallet();
+
+  // Show which wallet we detected (if any)
+  const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
+  aWallet.textContent = d.label ? `Open ${d.label} (${short})` : `Open in wallet (${short})`;
+
+  // Keep ethereum: URI for mobile/native handlers
+  aWallet.href = ethUri;
+  aWallet.removeAttribute('target');
+  aWallet.setAttribute('rel','noopener');
+
+  aWallet.addEventListener('click', async (e) => {
+    // Always copy the address first for the user
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(addr);
+    } catch (_) {}
+
+    const status = msg => setVoteStatus?.(msg, 'info');
+
+    // If we have an injected wallet, “poke” it so its popup opens,
+    // which is the fastest way for the user to hit “Send” and paste.
+    const { providers } = detectWallet();
+    const prov =
+      providers.find(p => p.isMetaMask) ||
+      providers.find(p => p.isCoinbaseWallet || p.providerName === 'CoinbaseWallet') ||
+      providers.find(p => p.isBraveWallet) ||
+      providers.find(p => p.isPhantom) ||
+      providers[0];
+
+    if (prov) {
+      try {
+        // This will either connect or at least bring the extension to the foreground.
+        await prov.request?.({ method: 'eth_requestAccounts' }).catch(()=>{});
+        status('Address copied ✓ — open your wallet’s Send, paste, choose amount.');
+        // Let the browser still try the ethereum: URI (helps on mobile)
+        setTimeout(() => { try { window.location.href = ethUri; } catch(_){} }, 250);
+        e.preventDefault(); // avoid navigating away on desktop
+        return;
+      } catch (_) {
+        // fall through to mobile deep-links
+      }
+    }
+
+    // No injected wallet available (or request failed): try mobile deep-links
+    setTimeout(() => { window.location.href = 'https://metamask.app.link/'; }, 400);
+    setTimeout(() => { window.location.href = 'https://go.cb-w.com/'; }, 1100);
+    status('Address copied ✓ — if a wallet is installed, open it and paste.');
+    // keep default href for mobile handlers; don’t preventDefault
+  }, { passive: false });
+}
+
+// Donation QR (keep 160px so phones scan instantly)
 drawQR(ethUri, 160, document.getElementById('qrDonate'));
 
       const copyBtn = document.getElementById('copyTreasury');
