@@ -38,6 +38,7 @@
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     .selected { outline: 2px solid #00E6F6; outline-offset: 2px; }
     .grid-gap { gap: 1.25rem; }
+    .vote-disabled { opacity: 0.6; cursor: not-allowed; }
   </style>
   <script>
     // === Email capture config ===
@@ -98,6 +99,8 @@
         <div class="glass rounded-xl p-3 md:col-span-2 text-center"><div class="text-xs text-slate-300">Totals</div><div id="totals" class="text-sm font-medium">0 : 0</div></div>
       </div>
 
+      <p id="voteStatus" class="text-xs text-center text-slate-400 min-h-[1.25rem]" aria-live="polite"></p>
+
       <form id="emailForm" class="max-w-md mx-auto space-y-2">
         <div class="flex gap-2">
           <input id="emailInput" type="email" placeholder="Enter email for early access" class="input flex-1 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 text-white focus:outline-none" required>
@@ -153,44 +156,189 @@
 
     function confettiLaunch(){ confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
 
+    // === Vote persistence via CountAPI (global tallies) ===
     const STORE_KEY='tj_prelaunch_votes_v2';
-    function getData(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||{totals:{before:0,after:0},user:{vote:null}};}catch{return {totals:{before:0,after:0},user:{vote:null}};} }
-    function setData(d){ localStorage.setItem(STORE_KEY, JSON.stringify(d)); }
+    const COUNT_API_BASE='https://api.countapi.xyz';
+    const COUNT_NAMESPACE='thejuice_prelaunch_v1';
+    const COUNT_KEYS={before:'before',after:'after'};
 
-    function render(d){
-      const a=d.totals.before||0,b=d.totals.after||0,sum=(a+b)||1;
-      const bp=a/sum,ap=b/sum;
-      document.getElementById('beforePct').textContent=(bp*100).toFixed(1)+'%';
-      document.getElementById('afterPct').textContent=(ap*100).toFixed(1)+'%';
-      document.getElementById('beforeVotes').textContent=a+' vote'+(a!==1?'s':'');
-      document.getElementById('afterVotes').textContent=b+' vote'+(b!==1?'s':'');
-      document.getElementById('beforeBar').style.width=(bp*100)+'%';
-      document.getElementById('afterBar').style.width=(ap*100)+'%';
-      document.getElementById('totals').textContent=`${a} : ${b}`;
-      document.getElementById('yourVote').textContent=d.user.vote?d.user.vote.charAt(0).toUpperCase()+d.user.vote.slice(1):'—';
+    const state={ totals:{ before:0, after:0 }, userVote:null };
+    let totalsLoaded=false;
+    let votePending=false;
+    let countersEnsured=false;
+
+    function loadUserVote(){
+      try{
+        const raw=localStorage.getItem(STORE_KEY);
+        if(!raw) return null;
+        const data=JSON.parse(raw);
+        if(data&&typeof data==='object'){
+          if(data.user&&data.user.vote) return data.user.vote;
+          if(data.vote) return data.vote;
+        }
+        if(raw==='before'||raw==='after') return raw;
+      }catch(_){ /* ignore */ }
+      return null;
     }
 
-    function vote(side){
-      const d=getData();
-      if(!['before','after'].includes(side))return;
-      const firstVote=!d.user.vote;
-      if(d.user.vote===side){render(d);return;}
-      if(d.user.vote)d.totals[d.user.vote]=Math.max(0,(d.totals[d.user.vote]||0)-1);
-      d.user.vote=side; d.totals[side]=(d.totals[side]||0)+1; setData(d); render(d);
-      if(firstVote) confettiLaunch();
+    function saveUserVote(vote){
+      try{
+        const payload={ user:{ vote }, version:3 };
+        localStorage.setItem(STORE_KEY, JSON.stringify(payload));
+      }catch(_){ /* ignore */ }
     }
 
-    document.addEventListener('DOMContentLoaded',()=>{
-      const deadline=parseDeadline(LAUNCH_UTC);
-      document.getElementById('deadlineLabel').textContent=deadline.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
-      startCountdown(deadline);
-      document.getElementById('btnBefore').onclick=()=>vote('before');
-      document.getElementById('btnAfter').onclick=()=>vote('after');
-      render(getData());
-      // draw QR of current page
-      drawQR(location.href, 96, document.getElementById('qr'));
-    });
-      function setupEmail(){
+    function setVoteStatus(message='', tone='muted'){
+      const el=document.getElementById('voteStatus');
+      if(!el) return;
+      const toneClass={
+        muted:'text-slate-400',
+        info:'text-cyan-300',
+        success:'text-emerald-300',
+        error:'text-rose-300'
+      }[tone]||'text-slate-400';
+      el.className=`text-xs text-center min-h-[1.25rem] mt-1 ${toneClass}`;
+      el.textContent=message;
+    }
+
+    function render(){
+      const beforeBtn=document.getElementById('btnBefore');
+      const afterBtn=document.getElementById('btnAfter');
+      const before=Math.max(0, Number(state.totals.before)||0);
+      const after=Math.max(0, Number(state.totals.after)||0);
+      const sum=before+after;
+      const beforePct=sum>0?(before/sum)*100:0;
+      const afterPct=sum>0?(after/sum)*100:0;
+      document.getElementById('beforePct').textContent=beforePct.toFixed(1)+'%';
+      document.getElementById('afterPct').textContent=afterPct.toFixed(1)+'%';
+      document.getElementById('beforeVotes').textContent=`${before} vote${before===1?'':'s'}`;
+      document.getElementById('afterVotes').textContent=`${after} vote${after===1?'':'s'}`;
+      document.getElementById('beforeBar').style.width=beforePct+'%';
+      document.getElementById('afterBar').style.width=afterPct+'%';
+      document.getElementById('totals').textContent=`${before} : ${after}`;
+      const voteLabel=state.userVote?{
+        before:'Before deadline',
+        after:'After deadline'
+      }[state.userVote]:'—';
+      document.getElementById('yourVote').textContent=voteLabel||'—';
+      if(beforeBtn){
+        beforeBtn.classList.toggle('selected', state.userVote==='before');
+        beforeBtn.setAttribute('aria-pressed', state.userVote==='before');
+      }
+      if(afterBtn){
+        afterBtn.classList.toggle('selected', state.userVote==='after');
+        afterBtn.setAttribute('aria-pressed', state.userVote==='after');
+      }
+    }
+
+    function setButtonsDisabled(disabled){
+      ['btnBefore','btnAfter'].forEach(id=>{
+        const btn=document.getElementById(id);
+        if(btn){ btn.disabled=disabled; btn.classList.toggle('vote-disabled', disabled); }
+      });
+    }
+
+    async function ensureCounters(){
+      if(countersEnsured) return;
+      const keys=Object.values(COUNT_KEYS);
+      let allSucceeded=true;
+      await Promise.all(keys.map(async key=>{
+        try{
+          const res=await fetch(`${COUNT_API_BASE}/create?namespace=${COUNT_NAMESPACE}&key=${key}&value=0`);
+          if(res.ok) return;
+          if(res.status===409) return; // already exists
+          allSucceeded=false;
+        }catch(_){
+          allSucceeded=false;
+        }
+      }));
+      if(allSucceeded) countersEnsured=true;
+    }
+
+    async function refreshTotals({ showStatus=true }={}){
+      if(showStatus) setVoteStatus('Syncing votes…','info');
+      try{
+        await ensureCounters();
+        const entries=await Promise.all(Object.entries(COUNT_KEYS).map(async([side,key])=>{
+          const res=await fetch(`${COUNT_API_BASE}/get/${COUNT_NAMESPACE}/${key}`);
+          if(!res.ok) throw new Error('Failed to fetch count');
+          const data=await res.json();
+          return [side, Number(data.value)||0];
+        }));
+        entries.forEach(([side,value])=>{ state.totals[side]=Math.max(0,value); });
+        totalsLoaded=true;
+        render();
+        if(showStatus) setVoteStatus('','muted');
+      }catch(err){
+        console.error(err);
+        totalsLoaded=false;
+        if(showStatus) setVoteStatus('Could not sync votes. Please try again later.','error');
+      }
+    }
+
+    async function updateCounter(side, delta){
+      const key=COUNT_KEYS[side];
+      if(!key) throw new Error('Invalid counter key');
+      const res=await fetch(`${COUNT_API_BASE}/update/${COUNT_NAMESPACE}/${key}?amount=${delta}`);
+      if(!res.ok) throw new Error('Failed to update counter');
+      const data=await res.json();
+      return Number(data.value)||0;
+    }
+
+    async function setCounter(side, value){
+      const key=COUNT_KEYS[side];
+      if(!key) throw new Error('Invalid counter key');
+      const res=await fetch(`${COUNT_API_BASE}/set/${COUNT_NAMESPACE}/${key}?value=${value}`);
+      if(!res.ok) throw new Error('Failed to set counter');
+      const data=await res.json();
+      return Number(data.value)||0;
+    }
+
+    async function vote(side){
+      if(!['before','after'].includes(side)||votePending) return;
+      const previous=state.userVote;
+      if(previous===side){
+        setVoteStatus('You already picked that side.','info');
+        return;
+      }
+      const firstVote=!previous;
+      votePending=true;
+      setButtonsDisabled(true);
+      try{
+        if(!totalsLoaded){
+          await refreshTotals({ showStatus:false });
+        }
+        await ensureCounters();
+        if(previous && (!state.totals || typeof state.totals[previous]!=='number')){
+          await refreshTotals({ showStatus:false });
+        }
+        if(previous){
+          const updatedPrev=await updateCounter(previous,-1);
+          if(updatedPrev<0){
+            const resetVal=await setCounter(previous,0);
+            state.totals[previous]=Math.max(0,resetVal);
+          }else{
+            state.totals[previous]=Math.max(0,updatedPrev);
+          }
+        }
+        const updatedNew=await updateCounter(side,1);
+        state.totals[side]=Math.max(0,updatedNew);
+        state.userVote=side;
+        saveUserVote(side);
+        render();
+        setVoteStatus('Vote recorded!','success');
+        if(firstVote) confettiLaunch();
+      }catch(err){
+        console.error(err);
+        setVoteStatus('Could not record vote. Please check your connection.','error');
+        await refreshTotals({ showStatus:false });
+      }finally{
+        setButtonsDisabled(false);
+        votePending=false;
+      }
+    }
+
+    function setupEmail(){
       const form=document.getElementById('emailForm');
       const input=document.getElementById('emailInput');
       const btn=document.getElementById('notifyBtn');
@@ -222,11 +370,60 @@
       const deadline=parseDeadline(LAUNCH_UTC);
       document.getElementById('deadlineLabel').textContent=deadline.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
       startCountdown(deadline);
-      document.getElementById('btnBefore').onclick=()=>vote('before');
-      document.getElementById('btnAfter').onclick=()=>vote('after');
-      render(getData());
+      document.getElementById('btnBefore').addEventListener('click',()=>vote('before'));
+      document.getElementById('btnAfter').addEventListener('click',()=>vote('after'));
+
+      state.userVote=loadUserVote();
+      setVoteStatus('', 'muted');
+      render();
+      setButtonsDisabled(true);
+      refreshTotals().finally(()=>{ if(!votePending) setButtonsDisabled(false); });
       drawQR(location.href, 96, document.getElementById('qr'));
       setupEmail();
+
+      const copyButton=document.getElementById('copyLink');
+      const copyToast=document.getElementById('copyToast');
+      if(copyButton){
+        copyButton.addEventListener('click',async(event)=>{
+          event.preventDefault();
+          try{
+            const url=location.href;
+            if(navigator.clipboard&&navigator.clipboard.writeText){
+              await navigator.clipboard.writeText(url);
+            }else{
+              const temp=document.createElement('textarea');
+              temp.value=url;
+              temp.setAttribute('readonly','');
+              temp.style.position='absolute';
+              temp.style.left='-9999px';
+              document.body.appendChild(temp);
+              temp.select();
+              document.execCommand('copy');
+              document.body.removeChild(temp);
+            }
+            if(copyToast){
+              copyToast.textContent='Copied ✓';
+              copyToast.classList.remove('opacity-0','text-rose-300');
+              copyToast.classList.add('opacity-100');
+              setTimeout(()=>{
+                copyToast.classList.add('opacity-0');
+                copyToast.classList.remove('opacity-100');
+              },1500);
+            }
+          }catch(_){
+            if(copyToast){
+              copyToast.textContent='Copy failed';
+              copyToast.classList.remove('opacity-0');
+              copyToast.classList.add('opacity-100','text-rose-300');
+              setTimeout(()=>{
+                copyToast.classList.add('opacity-0');
+                copyToast.classList.remove('opacity-100','text-rose-300');
+                copyToast.textContent='Copied ✓';
+              },2000);
+            }
+          }
+        });
+      }
     });
   </script>
 </body>
