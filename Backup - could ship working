@@ -77,6 +77,23 @@
   -webkit-box-shadow: 0 0 0 30px rgba(15,23,42,.95) inset !important;
   caret-color:#e5e7eb;
 }
+    #emailInput{
+  background: rgba(15,23,42,.8);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #e5e7eb;
+  caret-color: #e5e7eb;
+  border-radius: .5rem;
+}
+#emailInput::placeholder{ color: #94a3b8; }
+#emailInput:focus{
+  outline: none; border-color: rgba(0,230,246,.5);
+  box-shadow: 0 0 0 3px rgba(0,230,246,.15);
+}
+#emailInput:-webkit-autofill{
+  -webkit-text-fill-color:#e5e7eb !important;
+  -webkit-box-shadow: 0 0 0 30px rgba(15,23,42,.95) inset !important;
+  caret-color:#e5e7eb;
+}
   </style>
 
   <script>
@@ -143,44 +160,75 @@
 
       <p id="voteStatus" class="text-xs text-center text-slate-400 min-h-[1.25rem]" aria-live="polite">Local mode: totals are per-device only.</p>
 
-      <form id="emailForm" class="max-w-md mx-auto space-y-2">
-        <div class="flex gap-2">
-          <input id="emailInput" type="email" placeholder="Enter email for early access" class="input flex-1 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 text-white focus:outline-none" required>
-          <button id="notifyBtn" class="btn rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" type="submit">Notify me</button>
-        </div>
-        <p id="emailMsg" class="text-xs text-slate-400"></p>
-      </form>
+      <!-- Parallel row: Email + Notify | Copy link | Page QR -->
+<div class="grid gap-4 items-center md:grid-cols-[1fr_auto_auto] mt-4 -mb-2">
+  <!-- Email + Notify -->
+  <form id="emailForm" class="w-full">
+    <div class="flex gap-2 w-full">
+      <input id="emailInput" type="email"
+             placeholder="Enter email for early access"
+             class="flex-1 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-400
+                    bg-slate-900/80 border border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
+             required>
+      <button id="notifyBtn"
+              class="rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white whitespace-nowrap"
+              type="submit">
+        Notify me
+      </button>
+    </div>
+    <p id="emailMsg" class="text-xs text-slate-400 mt-1"></p>
+  </form>
 
-      <div class="flex items-center justify-center gap-3">
-        <button id="copyLink" class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">Copy page link</button>
-        <span id="copyToast" class="text-xs text-emerald-300 opacity-0 transition-opacity">Copied ✓</span>
-        <canvas id="qr" width="96" height="96" class="rounded-lg border border-white/20 bg-white/5"></canvas>
-      </div>
+  <!-- Copy link -->
+  <div class="flex justify-center md:justify-start">
+    <button id="copyLink"
+            class="rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15 h-[40px]">
+      Copy page link
+    </button>
+    <span id="copyToast" class="ml-2 self-center text-xs text-emerald-300 opacity-0 transition-opacity">Copied ✓</span>
+  </div>
+  
+  <!-- Page QR -->
+  <div class="flex justify-center">
+    <canvas id="qr" width="112" height="112"
+            class="rounded-lg border border-white/20 bg-white/5"></canvas>
+  </div>
+</div>
 
-      <!-- Donate to Treasury (HTML must be OUTSIDE any <script>) -->
-      <div class="glass rounded-2xl p-5 mt-6">
-        <div class="flex items-start gap-4 flex-col md:flex-row md:items-center md:justify-between">
-          <div>
-            <div class="text-lg font-semibold">Support the launch</div>
-            <p class="text-slate-400 text-sm">
-              Send <strong>ETH</strong> or any <strong>ERC-20</strong> token to our treasury address.
-            </p>
-            <div class="mt-2">
-              <code id="treasuryText" class="text-xs bg-white/5 border border-white/10 rounded px-2 py-1 break-all"></code>
-            </div>
-            <div class="flex gap-2 mt-3">
-              <button id="copyTreasury" class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">Copy address</button>
-              <a id="openInWallet" class="btn rounded-lg px-3 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" href="#" rel="noopener">Open in wallet</a>
-              <!-- Optional preset -->
-              <!-- <a class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15" href="ethereum:0x5a0d1c4b58dbea38471841053de97cb158f19a6e?value=10000000000000000">Donate 0.01 ETH</a> -->
-            </div>
-            <p class="text-xs text-slate-500 mt-2">Tip: most wallets accept the QR below or pasting the address.</p>
-          </div>
-          <div class="mt-4 md:mt-0">
-            <canvas id="qrDonate" width="160" height="160" class="rounded-lg border border-white/20 bg-white/5"></canvas>
-          </div>
-        </div>
+<!-- Donate to Treasury (moved up, sits right under the row) -->
+<div class="glass rounded-2xl p-5 mt-4">
+  <div class="flex items-start gap-4 flex-col md:flex-row md:items-center md:justify-between">
+    <div>
+      <div class="text-lg font-semibold">Support the launch</div>
+      <p class="text-slate-400 text-sm">
+        Send <strong>ETH</strong> or any <strong>ERC-20</strong> token to our treasury address.
+      </p>
+      <div class="mt-2">
+        <code id="treasuryText" class="text-xs bg-white/5 border border-white/10 rounded px-2 py-1 break-all"></code>
       </div>
+      <div class="flex gap-2 mt-3">
+        <button id="copyTreasury" class="rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">
+          Copy address
+        </button>
+        <a id="openInWallet"
+           class="rounded-lg px-3 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white"
+           href="#" rel="noopener">
+          Open in wallet
+        </a>
+        <!-- Optional preset
+        <a class="rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15"
+           href="ethereum:0x5a0d1c4b58dbea38471841053de97cb158f19a6e?value=10000000000000000">
+          Donate 0.01 ETH
+        </a> -->
+      </div>
+      <p class="text-xs text-slate-500 mt-2">Tip: most wallets accept the QR below or pasting the address.</p>
+    </div>
+    <div class="mt-4 md:mt-0">
+      <canvas id="qrDonate" width="160" height="160" class="rounded-lg border border-white/20 bg-white/5"></canvas>
+    </div>
+  </div>
+</div>
+            
 
       <p class="text-slate-400 text-xs text-center">Pre-launch demo: votes are visual only. On launch, bets will be on-chain (Base) with trustless escrow and a protocol fee (min 2.5%).</p>
     </section>
