@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TheJuice — Pre‑Launch Bet</title>
+  <meta name="description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
+  <meta name="theme-color" content="#0b1220" />
+  <meta property="og:title" content="TheJuice — Pre‑Launch Bet" />
+  <meta property="og:description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
+  <meta property="og:url" content="https://thejuice.xyz/" />
+  <meta property="og:image" content="/og.png" />
+  <!-- Favicon (embedded data URL so you don't need to upload anything yet) -->
+<!-- Custom Favicon -->
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="apple-touch-icon" href="/favicon.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TheJuice — Pre‑Launch Bet" />
+  <meta name="twitter:description" content="The first ever bet on The Juice… was The Juice itself. No bookie. Just code." />
+  <meta name="twitter:image" content="/og.png" />
+  <link rel="canonical" href="https://thejuice.xyz/" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Analytics: set your domain below (e.g., thejuice.xyz) -->
+  <script defer data-domain="thejuice.xyz" src="https://plausible.io/js/script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      background: radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,.12), transparent 40%),
+                  radial-gradient(1000px 700px at 90% 0%, rgba(255,215,0,.08), transparent 45%), #0b1220;
+      color: #fff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    .glass { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    .digit { font-variant-numeric: tabular-nums; letter-spacing:.25px; transition: transform .2s ease, color .2s ease; }
+    .pulse { transform: scale(1.05); color: #00E6F6; }
+    .progress { height:6px; border-radius:9999px; background: rgba(255,255,255,.08); overflow:hidden; position: relative; }
+    .progress > span { display:block; height:100%; background: linear-gradient(90deg, rgba(0,230,246,0.3), rgba(0,230,246,0.6), rgba(0,230,246,0.3)); background-size:200% 100%; animation: shimmer 4s infinite linear; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .selected { outline: 2px solid #00E6F6; outline-offset: 2px; }
+    .grid-gap { gap: 1.25rem; }
+    .vote-disabled { opacity: 0.6; cursor: not-allowed; }
+  </style>
+  <script>
+    // === Email capture config ===
+    const EMAIL_POST_ENDPOINT = 'https://formspree.io/f/xwprjbqj';
+  </script>
+</head>
+<body class="min-h-screen">
+  <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+    <header class="text-center space-y-3">
+      <h1 class="text-4xl font-bold tracking-tight">TheJuice — Pre‑Launch Bet</h1>
+      <p class="text-cyan-400 text-sm">The first ever bet on The Juice… was The Juice itself</p>
+    </header>
+
+    <section class="glass rounded-2xl p-8 space-y-10">
+      <div class="text-center space-y-3">
+        <h2 class="text-3xl font-semibold">Will The Juice launch before <span id="deadlineLabel"></span>?</h2>
+        <p class="text-slate-300">No bookie. Just code. (Pre‑launch demo — real escrow + wallets go live at launch.)</p>
+      </div>
+
+      <div id="countdown" class="grid grid-cols-2 md:grid-cols-4 gap-4 justify-center">
+        <div class="glass rounded-xl p-4 text-center"><div id="d" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Days</div></div>
+        <div class="glass rounded-xl p-4 text-center"><div id="h" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Hours</div></div>
+        <div class="glass rounded-xl p-4 text-center"><div id="m" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Minutes</div></div>
+        <div class="glass rounded-xl p-4 text-center"><div id="s" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Seconds</div></div>
+      </div>
+
+      <div class="grid md:grid-cols-2 grid-gap">
+        <button id="btnBefore" class="rounded-xl p-4 text-left bg-green-400/10 border border-green-300/20 hover:bg-green-400/20">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-green-300 font-medium">Before deadline</div>
+              <div class="text-slate-400 text-sm">I believe we ship before the countdown ends.</div>
+            </div>
+            <div class="text-right">
+              <div id="beforePct" class="text-lg font-semibold">0%</div>
+              <div id="beforeVotes" class="text-xs text-slate-400">0 votes</div>
+            </div>
+          </div>
+          <div class="progress mt-3"><span id="beforeBar" style="width:0%"></span></div>
+        </button>
+        <button id="btnAfter" class="rounded-xl p-4 text-left bg-red-400/10 border border-red-300/20 hover:bg-red-400/20">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-red-300 font-medium">After deadline</div>
+              <div class="text-slate-400 text-sm">We think it slips past the countdown.</div>
+            </div>
+            <div class="text-right">
+              <div id="afterPct" class="text-lg font-semibold">0%</div>
+              <div id="afterVotes" class="text-xs text-slate-400">0 votes</div>
+            </div>
+          </div>
+          <div class="progress mt-3"><span id="afterBar" style="width:0%"></span></div>
+        </button>
+      </div>
+
+      <div class="grid md:grid-cols-3 grid-gap">
+        <div class="glass rounded-xl p-3 text-center"><div class="text-xs text-slate-300">Your vote</div><div id="yourVote" class="text-sm font-medium">—</div></div>
+        <div class="glass rounded-xl p-3 md:col-span-2 text-center"><div class="text-xs text-slate-300">Totals</div><div id="totals" class="text-sm font-medium">0 : 0</div></div>
+      </div>
+
+      <p id="voteStatus" class="text-xs text-center text-slate-400 min-h-[1.25rem]" aria-live="polite"></p>
+
+      <form id="emailForm" class="max-w-md mx-auto space-y-2">
+        <div class="flex gap-2">
+          <input id="emailInput" type="email" placeholder="Enter email for early access" class="input flex-1 rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 text-white focus:outline-none" required>
+          <button id="notifyBtn" class="btn rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white" type="submit">Notify me</button>
+        </div>
+        <p id="emailMsg" class="text-xs text-slate-400"></p>
+      </form>
+
+      <div class="flex items-center justify-center gap-3">
+        <button id="copyLink" class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">Copy page link</button>
+        <span id="copyToast" class="text-xs text-emerald-300 opacity-0 transition-opacity">Copied ✓</span>
+        <canvas id="qr" width="96" height="96" class="rounded-lg border border-white/20 bg-white/5"></canvas>
+      </div>
+
+      <p class="text-slate-400 text-xs text-center">Pre‑launch demo: votes are visual only. On launch, bets will be on‑chain (Base) with trustless escrow and a protocol fee (min 2.5%).</p>
+    </section>
+  </main>
+
+  <script>
+    const LAUNCH_UTC = '2025-12-31T23:59:59Z';
+
+    function parseDeadline(s){ return new Date(s); }
+
+    function startCountdown(deadline){
+      const ids = ['d','h','m','s'];
+      function update(){
+        const now = new Date(); let diff = Math.max(0, deadline-now);
+        const d = Math.floor(diff/86400000); diff-=d*86400000;
+        const h = Math.floor(diff/3600000); diff-=h*3600000;
+        const m = Math.floor(diff/60000); diff-=m*60000;
+        const s = Math.floor(diff/1000);
+        [d,h,m,s].forEach((v,i)=>document.getElementById(ids[i]).textContent=v);
+      }
+      update();
+      let ticks=0;
+      setInterval(()=>{ update(); ticks++; if(ticks%10===0){ document.querySelectorAll('.digit').forEach(el=>{ el.classList.add('pulse'); setTimeout(()=>el.classList.remove('pulse'),300); }); } },1000);
+    }
+
+    function drawQR(text, size, canvas){
+      if(!canvas) return;
+      const srcs=[
+        `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}`,
+        `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`,
+        `https://quickchart.io/qr?size=${size}&text=${encodeURIComponent(text)}`
+      ];
+      const ctx=canvas.getContext('2d');
+      let i=0, t; const img=new Image(); img.crossOrigin='anonymous';
+      img.onload=()=>{ clearTimeout(t); ctx.clearRect(0,0,size,size); ctx.drawImage(img,0,0,size,size); };
+      img.onerror=()=>{ if(i<srcs.length-1){ i++; load(); } };
+      function load(){ img.src=srcs[i]; t=setTimeout(()=>img.onerror(), 2500); }
+      load();
+    }
+
+    function confettiLaunch(){ confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+
+    // === Vote persistence via CountAPI (global tallies) ===
+    const STORE_KEY='tj_prelaunch_votes_v2';
+    const COUNT_API_BASE='https://api.countapi.xyz';
+    const COUNT_NAMESPACE='thejuice_prelaunch_v1';
+    const COUNT_KEYS={before:'before',after:'after'};
+
+    const state={ totals:{ before:0, after:0 }, userVote:null };
+    let totalsLoaded=false;
+    let votePending=false;
+
+    function loadUserVote(){
+      try{
+        const raw=localStorage.getItem(STORE_KEY);
+        if(!raw) return null;
+        const data=JSON.parse(raw);
+        if(data&&typeof data==='object'){
+          if(data.user&&data.user.vote) return data.user.vote;
+          if(data.vote) return data.vote;
+        }
+        if(raw==='before'||raw==='after') return raw;
+      }catch(_){ /* ignore */ }
+      return null;
+    }
+
+    function saveUserVote(vote){
+      try{
+        const payload={ user:{ vote }, version:3 };
+        localStorage.setItem(STORE_KEY, JSON.stringify(payload));
+      }catch(_){ /* ignore */ }
+    }
+
+    function setVoteStatus(message='', tone='muted'){
+      const el=document.getElementById('voteStatus');
+      if(!el) return;
+      const toneClass={
+        muted:'text-slate-400',
+        info:'text-cyan-300',
+        success:'text-emerald-300',
+        error:'text-rose-300'
+      }[tone]||'text-slate-400';
+      el.className=`text-xs text-center min-h-[1.25rem] mt-1 ${toneClass}`;
+      el.textContent=message;
+    }
+
+    function render(){
+      const beforeBtn=document.getElementById('btnBefore');
+      const afterBtn=document.getElementById('btnAfter');
+      const before=Math.max(0, Number(state.totals.before)||0);
+      const after=Math.max(0, Number(state.totals.after)||0);
+      const sum=before+after;
+      const beforePct=sum>0?(before/sum)*100:0;
+      const afterPct=sum>0?(after/sum)*100:0;
+      document.getElementById('beforePct').textContent=beforePct.toFixed(1)+'%';
+      document.getElementById('afterPct').textContent=afterPct.toFixed(1)+'%';
+      document.getElementById('beforeVotes').textContent=`${before} vote${before===1?'':'s'}`;
+      document.getElementById('afterVotes').textContent=`${after} vote${after===1?'':'s'}`;
+      document.getElementById('beforeBar').style.width=beforePct+'%';
+      document.getElementById('afterBar').style.width=afterPct+'%';
+      document.getElementById('totals').textContent=`${before} : ${after}`;
+      const voteLabel=state.userVote?{
+        before:'Before deadline',
+        after:'After deadline'
+      }[state.userVote]:'—';
+      document.getElementById('yourVote').textContent=voteLabel||'—';
+      if(beforeBtn){
+        beforeBtn.classList.toggle('selected', state.userVote==='before');
+        beforeBtn.setAttribute('aria-pressed', state.userVote==='before');
+      }
+      if(afterBtn){
+        afterBtn.classList.toggle('selected', state.userVote==='after');
+        afterBtn.setAttribute('aria-pressed', state.userVote==='after');
+      }
+    }
+
+    function setButtonsDisabled(disabled){
+      ['btnBefore','btnAfter'].forEach(id=>{
+        const btn=document.getElementById(id);
+        if(btn){ btn.disabled=disabled; btn.classList.toggle('vote-disabled', disabled); }
+      });
+    }
+
+    async function ensureCounters(){
+      await Promise.all(Object.values(COUNT_KEYS).map(async key=>{
+        try{
+          await fetch(`${COUNT_API_BASE}/create?namespace=${COUNT_NAMESPACE}&key=${key}&value=0`);
+        }catch(_){ /* ignore */ }
+      }));
+    }
+
+    async function refreshTotals({ showStatus=true }={}){
+      if(showStatus) setVoteStatus('Syncing votes…','info');
+      try{
+        await ensureCounters();
+        const entries=await Promise.all(Object.entries(COUNT_KEYS).map(async([side,key])=>{
+          const res=await fetch(`${COUNT_API_BASE}/get/${COUNT_NAMESPACE}/${key}`);
+          if(!res.ok) throw new Error('Failed to fetch count');
+          const data=await res.json();
+          return [side, Number(data.value)||0];
+        }));
+        entries.forEach(([side,value])=>{ state.totals[side]=Math.max(0,value); });
+        totalsLoaded=true;
+        render();
+        if(showStatus) setVoteStatus('','muted');
+      }catch(err){
+        console.error(err);
+        totalsLoaded=false;
+        if(showStatus) setVoteStatus('Could not sync votes. Please try again later.','error');
+      }
+    }
+
+    async function updateCounter(side, delta){
+      const key=COUNT_KEYS[side];
+      if(!key) throw new Error('Invalid counter key');
+      const res=await fetch(`${COUNT_API_BASE}/update/${COUNT_NAMESPACE}/${key}?amount=${delta}`);
+      if(!res.ok) throw new Error('Failed to update counter');
+      const data=await res.json();
+      return Number(data.value)||0;
+    }
+
+    async function setCounter(side, value){
+      const key=COUNT_KEYS[side];
+      if(!key) throw new Error('Invalid counter key');
+      const res=await fetch(`${COUNT_API_BASE}/set/${COUNT_NAMESPACE}/${key}?value=${value}`);
+      if(!res.ok) throw new Error('Failed to set counter');
+      const data=await res.json();
+      return Number(data.value)||0;
+    }
+
+    async function vote(side){
+      if(!['before','after'].includes(side)||votePending) return;
+      const previous=state.userVote;
+      if(previous===side){
+        setVoteStatus('You already picked that side.','info');
+        return;
+      }
+      const firstVote=!previous;
+      votePending=true;
+      setButtonsDisabled(true);
+      try{
+        if(!totalsLoaded){
+          await refreshTotals({ showStatus:false });
+        }
+        await ensureCounters();
+        if(previous && (!state.totals || typeof state.totals[previous]!=='number')){
+          await refreshTotals({ showStatus:false });
+        }
+        if(previous){
+          const updatedPrev=await updateCounter(previous,-1);
+          if(updatedPrev<0){
+            const resetVal=await setCounter(previous,0);
+            state.totals[previous]=Math.max(0,resetVal);
+          }else{
+            state.totals[previous]=Math.max(0,updatedPrev);
+          }
+        }
+        const updatedNew=await updateCounter(side,1);
+        state.totals[side]=Math.max(0,updatedNew);
+        state.userVote=side;
+        saveUserVote(side);
+        render();
+        setVoteStatus('Vote recorded!','success');
+        if(firstVote) confettiLaunch();
+      }catch(err){
+        console.error(err);
+        setVoteStatus('Could not record vote (network blocked or API down). Try toggling your ad/tracker blocker and reload.','error');
+        await refreshTotals({ showStatus:false });
+      }finally{
+        setButtonsDisabled(false);
+        votePending=false;
+      }
+    }
+
+    function setupEmail(){
+      const form=document.getElementById('emailForm');
+      const input=document.getElementById('emailInput');
+      const btn=document.getElementById('notifyBtn');
+      const msg=document.getElementById('emailMsg');
+      if(!form||!EMAIL_POST_ENDPOINT) return;
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const email=(input.value||'').trim();
+        if(!email){ msg.textContent='Please enter a valid email.'; msg.className='text-xs text-rose-300'; return; }
+        btn.disabled=true; btn.textContent='Sending…'; msg.textContent='';
+        try{
+          const res = await fetch(EMAIL_POST_ENDPOINT,{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ email })
+          });
+          if(res.ok){
+            msg.textContent='Thanks! You\'re on the list.'; msg.className='text-xs text-emerald-300';
+            input.value='';
+          }else{
+            msg.textContent='Could not submit right now. Try again shortly.'; msg.className='text-xs text-rose-300';
+          }
+        }catch(_){
+          msg.textContent='Network error. Please try again.'; msg.className='text-xs text-rose-300';
+        }finally{ btn.disabled=false; btn.textContent='Notify me'; }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      const deadline=parseDeadline(LAUNCH_UTC);
+      document.getElementById('deadlineLabel').textContent=deadline.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+      startCountdown(deadline);
+      document.getElementById('btnBefore').addEventListener('click',()=>vote('before'));
+      document.getElementById('btnAfter').addEventListener('click',()=>vote('after'));
+
+      state.userVote=loadUserVote();
+      setVoteStatus('', 'muted');
+      render();
+      setButtonsDisabled(true);
+      refreshTotals().finally(()=>{ if(!votePending) setButtonsDisabled(false); });
+      drawQR(location.href, 96, document.getElementById('qr'));
+      setupEmail();
+
+      const copyButton=document.getElementById('copyLink');
+      const copyToast=document.getElementById('copyToast');
+      if(copyButton){
+        copyButton.addEventListener('click',async(event)=>{
+          event.preventDefault();
+          try{
+            const url=location.href;
+            if(navigator.clipboard&&navigator.clipboard.writeText){
+              await navigator.clipboard.writeText(url);
+            }else{
+              const temp=document.createElement('textarea');
+              temp.value=url;
+              temp.setAttribute('readonly','');
+              temp.style.position='absolute';
+              temp.style.left='-9999px';
+              document.body.appendChild(temp);
+              temp.select();
+              document.execCommand('copy');
+              document.body.removeChild(temp);
+            }
+            if(copyToast){
+              copyToast.textContent='Copied ✓';
+              copyToast.classList.remove('opacity-0','text-rose-300');
+              copyToast.classList.add('opacity-100');
+              setTimeout(()=>{
+                copyToast.classList.add('opacity-0');
+                copyToast.classList.remove('opacity-100');
+              },1500);
+            }
+          }catch(_){
+            if(copyToast){
+              copyToast.textContent='Copy failed';
+              copyToast.classList.remove('opacity-0');
+              copyToast.classList.add('opacity-100','text-rose-300');
+              setTimeout(()=>{
+                copyToast.classList.add('opacity-0');
+                copyToast.classList.remove('opacity-100','text-rose-300');
+                copyToast.textContent='Copied ✓';
+              },2000);
+            }
+          }
+        });
+      }
+    });
+  </script>
+
+<!-- === BEGIN: Vote Sync + Resilience Patch (non-breaking) === -->
+<script>
+(function(){
+  // Guard: run once
+  if (window.__votePatchApplied__) return;
+  window.__votePatchApplied__ = true;
+
+  // --- CountAPI endpoint fallback (ad-block safe) ---
+  // We try both official domains in order. If the first fails, we transparently retry the second.
+  const __COUNT_BASES__ = [
+    (typeof window.COUNT_API_BASE === 'string' ? window.COUNT_API_BASE : 'https://api.countapi.xyz'),
+    'https://countapi.xyz'
+  ];
+  let __countBaseIndex__ = 0;
+  function countBase() { return __COUNT_BASES__[__countBaseIndex__]; }
+  async function fetchCountJSON(path, opts) {
+  }
+
+  // ---- Local (no-backend) fallback ----
+  // If all CountAPI calls fail or you don't want to use any external API,
+  // we flip into a local-only mode that keeps totals per-browser.
+  let __LOCAL_MODE__ = false;
+  function enableLocalCounterMode(){
+    if (__LOCAL_MODE__) return;
+    __LOCAL_MODE__ = true;
+    console.warn('[Votes] Switching to LOCAL STORAGE mode (no global totals).');
+    // Announce in any status element:
+    try{
+      const banner = document.getElementById('voteStatus');
+      if (banner) banner.textContent = 'Local mode: totals are per-device only.';
+    }catch(_){}
+
+    // Local storage keys
+    const LSK_BEFORE = 'local_totals_before';
+    const LSK_AFTER  = 'local_totals_after';
+    const LSK_VOTE   = 'userVote';
+
+    // Ensure keys
+    try{
+      if (!localStorage.getItem(LSK_BEFORE)) localStorage.setItem(LSK_BEFORE, '0');
+      if (!localStorage.getItem(LSK_AFTER))  localStorage.setItem(LSK_AFTER,  '0');
+    }catch(_){}
+
+    // Rewire helpers to local implementations
+    window.ensureCounters = async function(){};
+
+    window.refreshTotals = async function({showStatus=true}={}){
+      try{
+        const b = parseInt(localStorage.getItem(LSK_BEFORE)||'0',10) || 0;
+        const a = parseInt(localStorage.getItem(LSK_AFTER)||'0',10) || 0;
+        window.state.totals.before = Math.max(0,b);
+        window.state.totals.after  = Math.max(0,a);
+        window.totalsLoaded = true;
+        if (typeof window.render === 'function') window.render();
+        if(showStatus) setVoteStatus('','muted');
+      }catch(e){
+        console.error(e);
+        window.totalsLoaded=false;
+        if(showStatus) setVoteStatus('Local totals unavailable.','error');
+      }
+    };
+
+    window.updateCounter = async function(side, delta){
+      const key = (side==='before') ? LSK_BEFORE : LSK_AFTER;
+      const cur = parseInt(localStorage.getItem(key)||'0',10) || 0;
+      const next = Math.max(0, cur + delta);
+      localStorage.setItem(key, String(next));
+      return next;
+    };
+  }
+
+    // Attempt current base, then alternate base if it fails once.
+    const basesToTry = [countBase(), ...__COUNT_BASES__.filter((b,i)=>i!==__countBaseIndex__)];
+    let lastErr;
+    for (const base of basesToTry) {
+      try {
+        const url = base.replace(/\/+$/,'') + path;
+        const data = await fetchJSON(url, opts);
+        // Lock in working base
+        __countBaseIndex__ = __COUNT_BASES__.indexOf(base);
+        return data;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error('CountAPI unreachable');
+  }
+
+  if (window.__votePatchApplied__) return;
+  window.__votePatchApplied__ = true;
+
+  // Soft feature-detection for globals your page already defines
+  const COUNT_API_BASE = window.COUNT_API_BASE || "https://api.countapi.xyz";
+  const COUNT_NAMESPACE = window.COUNT_NAMESPACE || (location.hostname || "localhost");
+  const COUNT_KEYS = window.COUNT_KEYS || { before: "before", after: "after" };
+
+  // Create a tiny shared state if your page didn't already provide one
+  window.state = window.state || { totals: { before: 0, after: 0 }, userVote: null };
+  window.totalsLoaded = window.totalsLoaded || false;
+  window.votePending = window.votePending || false;
+
+  // NOP helpers if your page doesn't define them
+  window.setVoteStatus = window.setVoteStatus || function(msg,_type){ 
+    const el = document.getElementById("voteStatus");
+    if (el) el.textContent = msg || "";
+  };
+  window.setButtonsDisabled = window.setButtonsDisabled || function(disabled){
+    ["btnBefore","btnAfter"].forEach(id=>{
+      const b = document.getElementById(id);
+      if (b) b.disabled = !!disabled;
+    });
+  };
+  window.saveUserVote = window.saveUserVote || function(side){
+    try { localStorage.setItem("userVote", side||""); } catch(_){}
+  };
+  (function restoreVote(){
+    try {
+      const v = localStorage.getItem("userVote");
+      if (v === "before" || v === "after") window.state.userVote = v;
+    } catch(_){}
+  })();
+
+  // --- resilient fetch helpers ---
+  async function fetchJSON(url, { method='GET', body, tries=2 } = {}) {
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 5000); // 5s timeout
+    try {
+      const res = await fetch(url, {
+        method,
+        body,
+        headers: { 'Cache-Control': 'no-cache' },
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      if (tries > 1) return fetchJSON(url, { method, body, tries: tries - 1 });
+      throw e;
+    } finally { clearTimeout(t); }
+  }
+
+  // Idempotent: makes sure counters exist (CountAPI 'create' is safe to call repeatedly)
+  async function ensureCounters(){
+    await Promise.all(Object.values(COUNT_KEYS).map(async key=>{
+      try { await fetchCountJSON(`/create?namespace=${COUNT_NAMESPACE}&key=${encodeURIComponent(key)}&value=0`); }
+      catch(_){ /* ignore */ }
+    }));
+  }
+
+  async function refreshTotals({ showStatus=true }={}){
+    if(showStatus) setVoteStatus('Syncing votes…','info');
+    try{
+      await ensureCounters();
+      const pairs = await Promise.all(Object.entries(COUNT_KEYS).map(async([side,key])=>{
+        const data = await fetchCountJSON(`/get/${encodeURIComponent(COUNT_NAMESPACE)}/${encodeURIComponent(key)}?ts=${Date.now()}`);
+        return [side, Number(data.value)||0];
+      }));
+      pairs.forEach(([side,val])=> window.state.totals[side] = Math.max(0,val));
+      window.totalsLoaded = true;
+      if (typeof window.render === "function") window.render();
+      if(showStatus) setVoteStatus('','muted');
+    }catch(err){
+      console.error(err);
+      window.totalsLoaded=false;
+      if(showStatus) setVoteStatus('Could not sync global votes. Falling back to local-only.','error');
+      enableLocalCounterMode();
+      await window.refreshTotals({showStatus:false});
+    }
+  }
+
+  async function updateCounter(side, delta){
+    const key = COUNT_KEYS[side];
+    if(!key) throw new Error('Invalid counter key');
+    const data = await fetchCountJSON(`/update/${encodeURIComponent(COUNT_NAMESPACE)}/${encodeURIComponent(key)}?amount=${delta}`);
+    return Number(data.value)||0;
+  }
+
+  // Non-breaking: wrap & replace vote() if present; otherwise we just define it.
+  const originalRender = window.render;
+  window.render = function(){
+    // Call original render if it exists
+    if (typeof originalRender === "function") {
+      try { originalRender(); } catch(e){ console.warn("Original render() error:", e); }
+    }
+    // Progressive enhancement: update obvious UI targets if present
+    const before = Math.max(0, Number(window.state.totals.before)||0);
+    const after  = Math.max(0, Number(window.state.totals.after)||0);
+    const sum    = before + after;
+    const beforePct = sum>0 ? (before/sum)*100 : 0;
+    const afterPct  = sum>0 ? (after /sum)*100 : 0;
+
+    const setText = (id, txt)=>{ const el=document.getElementById(id); if(el) el.textContent = txt; };
+    const setWidth = (id, pct)=>{ const el=document.getElementById(id); if(el) el.style.width = pct+'%'; };
+
+    setText('beforePct', beforePct.toFixed(1)+'%');
+    setText('afterPct',  afterPct.toFixed(1)+'%');
+    setText('beforeVotes', `${before} vote${before===1?'':'s'}`);
+    setText('afterVotes',  `${after} vote${after===1?'':'s'}`);
+    setWidth('beforeBar', beforePct);
+    setWidth('afterBar',  afterPct);
+
+    const totalsEl = document.getElementById('totals');
+    if (totalsEl) totalsEl.textContent = `${before} : ${after}  •  Total ${sum}`;
+
+    const voteLabel = window.state.userVote ? ({before:'Before deadline', after:'After deadline'}[window.state.userVote]) : '—';
+    setText('yourVote', voteLabel || '—');
+
+    ['btnBefore','btnAfter'].forEach(id=>{
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const pressed = (id==='btnBefore' ? 'before' : 'after') === window.state.userVote;
+      btn.classList.toggle('selected', pressed);
+      btn.setAttribute('aria-pressed', pressed);
+    });
+  };
+
+  window.vote = async function(side){
+    if(!['before','after'].includes(side) || window.votePending) return;
+
+    const previous = window.state.userVote;
+    if(previous === side){
+      setVoteStatus('You already picked that side.','info');
+      return;
+    }
+
+    const firstVote = !previous;
+    window.votePending = true;
+    setButtonsDisabled(true);
+    setVoteStatus('Recording your vote…','info');
+
+    try{
+      if(!window.totalsLoaded) await refreshTotals({ showStatus:false });
+      await ensureCounters();
+
+      // Step 1: decrement previous if switching
+      if(previous){
+        try{
+          const updatedPrev = await updateCounter(previous, -1);
+          window.state.totals[previous] = Math.max(0, updatedPrev);
+        }catch(e){
+          // Force re-sync if network flaked
+          await refreshTotals({ showStatus:false });
+        }
+      }
+
+      // Step 2: increment new
+      const updatedNew = await updateCounter(side, +1);
+      window.state.totals[side] = Math.max(0, updatedNew);
+
+      window.state.userVote = side;
+      saveUserVote(side);
+      if (typeof window.render === "function") window.render();
+
+      setVoteStatus('Vote recorded!','success');
+      if(firstVote && typeof window.confettiLaunch === "function") window.confettiLaunch();
+    }catch(err){
+      console.error(err);
+      setVoteStatus('Global counter failed. Switching to local-only votes.','error');
+      enableLocalCounterMode();
+      await window.vote(side); return;
+    }finally{
+      setButtonsDisabled(false);
+      window.votePending = false;
+    }
+  };
+
+  // Auto-sync loop: gentle, only when not mid-vote
+  document.addEventListener('DOMContentLoaded', function(){
+    // Initial sync (does not override your own initial call if you already do one)
+    refreshTotals({ showStatus: false });
+
+    setInterval(()=>{
+      if (!window.votePending) refreshTotals({ showStatus:false });
+    }, 20000);
+
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.visibilityState === 'visible' && !window.votePending) {
+        refreshTotals({ showStatus:false });
+      }
+    });
+  });
+})();
+</script>
+<!-- === END: Vote Sync + Resilience Patch === -->
+</body>
+</html>
