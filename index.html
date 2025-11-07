@@ -1,5 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+  <script>
+/* Kill CountAPI & charts calls so only local mode runs */
+window.FORCE_LOCAL_VOTES = true;
+(function(){
+  const origFetch = window.fetch;
+  window.fetch = function(input, init){
+    const url = (typeof input === 'string') ? input : (input && input.url) || '';
+    if (/(^|\/\/)(api\.)?countapi\.xyz/i.test(url)) {
+      // Return a harmless OK with a dummy value so old code doesn't error
+      return Promise.resolve(new Response(
+        JSON.stringify({ value: 0 }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      ));
+    }
+    if (/charts\.googleapis\.com/i.test(url)) {
+      // Block external chart/QR fetches cleanly (avoid CORS errors)
+      return Promise.resolve(new Response('', { status: 204 }));
+    }
+    return origFetch.apply(this, arguments);
+  };
+})();
+</script>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
