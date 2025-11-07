@@ -158,18 +158,13 @@
 
     // === Vote persistence via CountAPI (global tallies) ===
     const STORE_KEY='tj_prelaunch_votes_v2';
-    const LOCAL_TOTALS_KEY='tj_prelaunch_totals_cache_v1';
     const COUNT_API_BASE='https://api.countapi.xyz';
     const COUNT_NAMESPACE='thejuice_prelaunch_v1';
     const COUNT_KEYS={before:'before',after:'after'};
-    const REMOTE_RETRY_MS=30000;
 
     const state={ totals:{ before:0, after:0 }, userVote:null };
     let totalsLoaded=false;
     let votePending=false;
-    let countersEnsured=false;
-    let remoteAvailable=true;
-    let remoteRetryAt=0;
 
     function loadUserVote(){
       try{
@@ -190,48 +185,6 @@
         const payload={ user:{ vote }, version:3 };
         localStorage.setItem(STORE_KEY, JSON.stringify(payload));
       }catch(_){ /* ignore */ }
-    }
-
-    function loadLocalTotals(){
-      try{
-        const raw=localStorage.getItem(LOCAL_TOTALS_KEY);
-        if(!raw) return null;
-        const data=JSON.parse(raw);
-        if(data&&typeof data==='object'){
-          const before=Number(data.before);
-          const after=Number(data.after);
-          if(Number.isFinite(before)&&Number.isFinite(after)){
-            return { before:Math.max(0,before), after:Math.max(0,after) };
-          }
-        }
-      }catch(_){ /* ignore */ }
-      return null;
-    }
-
-    function saveLocalTotals(totals){
-      try{
-        const payload={
-          before:Math.max(0, Number(totals.before)||0),
-          after:Math.max(0, Number(totals.after)||0)
-        };
-        localStorage.setItem(LOCAL_TOTALS_KEY, JSON.stringify(payload));
-      }catch(_){ /* ignore */ }
-    }
-
-    function applyTotals(totals){
-      state.totals.before=Math.max(0, Number(totals?.before)||0);
-      state.totals.after=Math.max(0, Number(totals?.after)||0);
-    }
-
-    function applyLocalVote(side, previous){
-      if(previous&&previous!==side){
-        state.totals[previous]=Math.max(0,(Number(state.totals[previous])||0)-1);
-      }
-      state.totals[side]=Math.max(0,(Number(state.totals[side])||0)+(previous===side?0:1));
-      state.userVote=side;
-      saveUserVote(side);
-      saveLocalTotals(state.totals);
-      render();
     }
 
     function setVoteStatus(message='', tone='muted'){
@@ -285,30 +238,17 @@
     }
 
     async function ensureCounters(){
-      if(!remoteAvailable && Date.now()<remoteRetryAt) return false;
-      if(countersEnsured) return true;
-      const keys=Object.values(COUNT_KEYS);
-      if(keys.length===0){ countersEnsured=true; return true; }
-      const outcomes=await Promise.all(keys.map(async key=>{
+      await Promise.all(Object.values(COUNT_KEYS).map(async key=>{
         try{
-          const res=await fetch(`${COUNT_API_BASE}/create?namespace=${COUNT_NAMESPACE}&key=${key}&value=0`);
-          if(res.ok||res.status===409) return true; // already exists or created
+          await fetch(`${COUNT_API_BASE}/create?namespace=${COUNT_NAMESPACE}&key=${key}&value=0`);
         }catch(_){ /* ignore */ }
-        return false;
       }));
-      const allSucceeded=outcomes.every(Boolean);
-      if(allSucceeded){
-        countersEnsured=true;
-        return true;
-      }
-      return false;
     }
 
     async function refreshTotals({ showStatus=true }={}){
       if(showStatus) setVoteStatus('Syncing votes…','info');
       try{
-        const ensured=await ensureCounters();
-        if(!ensured) throw new Error('Failed to ensure counters');
+        await ensureCounters();
         const entries=await Promise.all(Object.entries(COUNT_KEYS).map(async([side,key])=>{
           const res=await fetch(`${COUNT_API_BASE}/get/${COUNT_NAMESPACE}/${key}`);
           if(!res.ok) throw new Error('Failed to fetch count');
@@ -317,29 +257,12 @@
         }));
         entries.forEach(([side,value])=>{ state.totals[side]=Math.max(0,value); });
         totalsLoaded=true;
-        remoteAvailable=true;
-        remoteRetryAt=0;
-        saveLocalTotals(state.totals);
         render();
         if(showStatus) setVoteStatus('','muted');
-        return true;
       }catch(err){
         console.error(err);
-        const cached=loadLocalTotals();
-        const message=cached
-          ? 'Working offline — votes stay on this device until the connection returns.'
-          : 'Offline mode — votes are stored on this device only.';
-        if(cached){
-          applyTotals(cached);
-        }
-        totalsLoaded=true;
-        render();
-        if(showStatus || !votePending){
-          setVoteStatus(message,'info');
-        }
-        remoteAvailable=false;
-        remoteRetryAt=Date.now()+REMOTE_RETRY_MS;
-        return false;
+        totalsLoaded=false;
+        if(showStatus) setVoteStatus('Could not sync votes. Please try again later.','error');
       }
     }
 
@@ -364,10 +287,6 @@
     async function vote(side){
       if(!['before','after'].includes(side)||votePending) return;
       const previous=state.userVote;
-      const snapshot={
-        before:Math.max(0, Number(state.totals.before)||0),
-        after:Math.max(0, Number(state.totals.after)||0)
-      };
       if(previous===side){
         setVoteStatus('You already picked that side.','info');
         return;
@@ -379,28 +298,9 @@
         if(!totalsLoaded){
           await refreshTotals({ showStatus:false });
         }
-        let canUseRemote=false;
-        if(remoteAvailable){
-          canUseRemote=await ensureCounters();
-          if(!canUseRemote){
-            remoteAvailable=false;
-            remoteRetryAt=Date.now()+REMOTE_RETRY_MS;
-          }
-        }else if(Date.now()>=remoteRetryAt){
-          const refreshed=await refreshTotals({ showStatus:false });
-          if(refreshed){
-            canUseRemote=true;
-          }
-        }
-        if(canUseRemote && previous && (!state.totals || typeof state.totals[previous]!=='number')){
+        await ensureCounters();
+        if(previous && (!state.totals || typeof state.totals[previous]!=='number')){
           await refreshTotals({ showStatus:false });
-        }
-        if(!canUseRemote){
-          applyTotals(snapshot);
-          applyLocalVote(side, previous);
-          setVoteStatus('Offline mode — vote saved on this device.','info');
-          if(firstVote) confettiLaunch();
-          return;
         }
         if(previous){
           const updatedPrev=await updateCounter(previous,-1);
@@ -415,17 +315,13 @@
         state.totals[side]=Math.max(0,updatedNew);
         state.userVote=side;
         saveUserVote(side);
-        saveLocalTotals(state.totals);
         render();
         setVoteStatus('Vote recorded!','success');
         if(firstVote) confettiLaunch();
       }catch(err){
         console.error(err);
-        remoteAvailable=false;
-        remoteRetryAt=Date.now()+REMOTE_RETRY_MS;
-        applyTotals(snapshot);
-        applyLocalVote(side, previous);
-        setVoteStatus('Connection issue — vote saved locally for now.','error');
+        setVoteStatus('Could not record vote. Please check your connection.','error');
+        await refreshTotals({ showStatus:false });
       }finally{
         setButtonsDisabled(false);
         votePending=false;
@@ -468,10 +364,6 @@
       document.getElementById('btnAfter').addEventListener('click',()=>vote('after'));
 
       state.userVote=loadUserVote();
-      const cachedTotals=loadLocalTotals();
-      if(cachedTotals){
-        applyTotals(cachedTotals);
-      }
       setVoteStatus('', 'muted');
       render();
       setButtonsDisabled(true);
