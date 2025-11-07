@@ -57,43 +57,26 @@
     .selected{outline:2px solid #00E6F6;outline-offset:2px;box-shadow:0 0 0 2px rgba(0,230,246,.25) inset,0 6px 18px rgba(0,230,246,.15);}
     .grid-gap { gap: 1.25rem; }
     /* Email input styling for dark mode */
-#emailInput{
-  background: rgba(15,23,42,.8);         /* slate-900-ish */
-  border: 1px solid rgba(255,255,255,.12);
-  color: #e5e7eb;                         /* text-slate-200 */
-  caret-color: #e5e7eb;
-  border-radius: .5rem;
-}
-#emailInput::placeholder{ color: #94a3b8; } /* text-slate-400 */
-#emailInput:focus{
-  outline: none;
-  border-color: rgba(0,230,246,.5);
-  box-shadow: 0 0 0 3px rgba(0,230,246,.15);
-}
-
-/* Fix Chrome/Safari autofill yellow on dark backgrounds */
-#emailInput:-webkit-autofill{
-  -webkit-text-fill-color:#e5e7eb !important;
-  -webkit-box-shadow: 0 0 0 30px rgba(15,23,42,.95) inset !important;
-  caret-color:#e5e7eb;
-}
     #emailInput{
-  background: rgba(15,23,42,.8);
-  border: 1px solid rgba(255,255,255,.12);
-  color: #e5e7eb;
-  caret-color: #e5e7eb;
-  border-radius: .5rem;
-}
-#emailInput::placeholder{ color: #94a3b8; }
-#emailInput:focus{
-  outline: none; border-color: rgba(0,230,246,.5);
-  box-shadow: 0 0 0 3px rgba(0,230,246,.15);
-}
-#emailInput:-webkit-autofill{
-  -webkit-text-fill-color:#e5e7eb !important;
-  -webkit-box-shadow: 0 0 0 30px rgba(15,23,42,.95) inset !important;
-  caret-color:#e5e7eb;
-}
+      background: rgba(15,23,42,.8);         /* slate-900-ish */
+      border: 1px solid rgba(255,255,255,.12);
+      color: #e5e7eb;                         /* text-slate-200 */
+      caret-color: #e5e7eb;
+      border-radius: .5rem;
+    }
+    #emailInput::placeholder{ color: #94a3b8; } /* text-slate-400 */
+    #emailInput:focus{
+      outline: none;
+      border-color: rgba(0,230,246,.5);
+      box-shadow: 0 0 0 3px rgba(0,230,246,.15);
+    }
+
+    /* Fix Chrome/Safari autofill yellow on dark backgrounds */
+    #emailInput:-webkit-autofill{
+      -webkit-text-fill-color:#e5e7eb !important;
+      -webkit-box-shadow: 0 0 0 30px rgba(15,23,42,.95) inset !important;
+      caret-color:#e5e7eb;
+    }
     #qr,#qrDonate{image-rendering:crisp-edges;image-rendering:pixelated;}
   </style>
 
@@ -181,20 +164,22 @@
   </form>
 
   <!-- Copy link row (tighter) -->
-<div class="grid gap-2 items-center md:grid-cols-[1fr_auto_auto] mt-1 -mb-2">
-  <!-- spacer keeps email row grid consistent; leave empty -->
-  <div></div>
+  <div class="grid gap-2 items-center md:grid-cols-[1fr_auto_auto] mt-1 -mb-2">
+    <!-- spacer keeps email row grid consistent; leave empty -->
+    <div></div>
 
-  <button id="copyLink" class="h-[40px] rounded-lg px-3 bg-white/10 border border-white/20 hover:bg-white/15">
-    Copy page link
-  </button>
+    <button id="copyLink" class="h-[40px] rounded-lg px-3 bg-white/10 border border-white/20 hover:bg-white/15">
+      Copy page link
+    </button>
 
-  <!-- Page QR card -->
-<div class="flex items-center justify-center mt-1">
-  <canvas id="qr" width="140" height="140"
-    class="rounded-2xl border border-white/20 bg-white p-2 shadow-xl"></canvas>
-</div>
-  
+    <!-- Page QR card -->
+    <div class="flex items-center justify-center mt-1">
+      <canvas id="qr" width="140" height="140"
+        class="rounded-2xl border border-white/20 bg-white p-2 shadow-xl"></canvas>
+    </div>
+
+  </div>
+
 </div>
 
 <!-- toast lives outside the grid so it doesn’t shift layout -->
@@ -271,12 +256,30 @@
     /* ---------- QR generator (fallback-safe) ---------- */
     function drawQR(text, size, canvas){
       if(!canvas) return;
+      const ctx=canvas.getContext('2d');
+
+      if(window.FORCE_LOCAL_VOTES){
+        ctx.clearRect(0,0,size,size);
+        ctx.fillStyle='rgba(15,23,42,0.95)';
+        ctx.fillRect(0,0,size,size);
+        ctx.strokeStyle='rgba(255,255,255,0.2)';
+        ctx.strokeRect(0.5,0.5,size-1,size-1);
+        ctx.fillStyle='rgba(148,163,184,0.85)';
+        ctx.font=`${Math.max(10, Math.floor(size/8))}px Inter, sans-serif`;
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText('QR offline', size/2, size/2 - Math.max(8, size*0.08));
+        ctx.fillStyle='rgba(96,165,250,0.9)';
+        ctx.font=`${Math.max(9, Math.floor(size/12))}px Inter, sans-serif`;
+        ctx.fillText('Local preview mode', size/2, size/2 + Math.max(8, size*0.08));
+        return;
+      }
+
       const srcs=[
         `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}`,
         `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`,
         `https://quickchart.io/qr?size=${size}&text=${encodeURIComponent(text)}`
       ];
-      const ctx=canvas.getContext('2d');
       let i=0, t; const img=new Image(); img.crossOrigin='anonymous';
       img.onload=()=>{ clearTimeout(t); ctx.clearRect(0,0,size,size); ctx.drawImage(img,0,0,size,size); };
       img.onerror=()=>{ if(i<srcs.length-1){ i++; load(); } };
