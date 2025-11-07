@@ -159,7 +159,7 @@
         <div class="glass rounded-xl p-3 md:col-span-2 text-center"><div class="text-xs text-slate-300">Totals</div><div id="totals" class="text-sm font-medium">0 : 0</div></div>
       </div>
 
-      <p id="voteStatus" class="text-xs text-center text-slate-400 min-h-[1.25rem]" aria-live="polite">Local mode: totals are per-device only.</p>
+      <p id="voteStatus" class="text-xs text-center text-slate-400 min-h-[1.25rem]" aria-live="polite">Local preview: totals are per-device only.</p>
 
       <!-- Parallel row: Email + Notify | Copy link | Page QR -->
 <div class="grid gap-3 items-center md:grid-cols-[1fr_auto_auto] mt-3 -mb-1">
@@ -523,7 +523,7 @@ drawQR(ethUri, 160, document.getElementById('qrDonate'));
 
       setupEmail();
       setupCopy();
-      setVoteStatus('Local mode: totals are per-device only.','muted');
+      setVoteStatus('Local preview: totals are per-device only.','muted');
     });
   </script>
 </body>
