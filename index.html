@@ -180,17 +180,7 @@
       if(firstVote) confettiLaunch();
     }
 
-    document.addEventListener('DOMContentLoaded',()=>{
-      const deadline=parseDeadline(LAUNCH_UTC);
-      document.getElementById('deadlineLabel').textContent=deadline.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
-      startCountdown(deadline);
-      document.getElementById('btnBefore').onclick=()=>vote('before');
-      document.getElementById('btnAfter').onclick=()=>vote('after');
-      render(getData());
-      // draw QR of current page
-      drawQR(location.href, 96, document.getElementById('qr'));
-    });
-      function setupEmail(){
+    function setupEmail(){
       const form=document.getElementById('emailForm');
       const input=document.getElementById('emailInput');
       const btn=document.getElementById('notifyBtn');
@@ -227,6 +217,50 @@
       render(getData());
       drawQR(location.href, 96, document.getElementById('qr'));
       setupEmail();
+
+      const copyButton=document.getElementById('copyLink');
+      const copyToast=document.getElementById('copyToast');
+      if(copyButton){
+        copyButton.addEventListener('click',async(event)=>{
+          event.preventDefault();
+          try{
+            const url=location.href;
+            if(navigator.clipboard&&navigator.clipboard.writeText){
+              await navigator.clipboard.writeText(url);
+            }else{
+              const temp=document.createElement('textarea');
+              temp.value=url;
+              temp.setAttribute('readonly','');
+              temp.style.position='absolute';
+              temp.style.left='-9999px';
+              document.body.appendChild(temp);
+              temp.select();
+              document.execCommand('copy');
+              document.body.removeChild(temp);
+            }
+            if(copyToast){
+              copyToast.textContent='Copied ✓';
+              copyToast.classList.remove('opacity-0','text-rose-300');
+              copyToast.classList.add('opacity-100');
+              setTimeout(()=>{
+                copyToast.classList.add('opacity-0');
+                copyToast.classList.remove('opacity-100');
+              },1500);
+            }
+          }catch(_){
+            if(copyToast){
+              copyToast.textContent='Copy failed';
+              copyToast.classList.remove('opacity-0');
+              copyToast.classList.add('opacity-100','text-rose-300');
+              setTimeout(()=>{
+                copyToast.classList.add('opacity-0');
+                copyToast.classList.remove('opacity-100','text-rose-300');
+                copyToast.textContent='Copied ✓';
+              },2000);
+            }
+          }
+        });
+      }
     });
   </script>
 </body>
