@@ -165,7 +165,6 @@
     const state={ totals:{ before:0, after:0 }, userVote:null };
     let totalsLoaded=false;
     let votePending=false;
-    let countersEnsured=false;
 
     function loadUserVote(){
       try{
@@ -186,6 +185,147 @@
         const payload={ user:{ vote }, version:3 };
         localStorage.setItem(STORE_KEY, JSON.stringify(payload));
       }catch(_){ /* ignore */ }
+    }
+
+    function setVoteStatus(message='', tone='muted'){
+      const el=document.getElementById('voteStatus');
+      if(!el) return;
+      const toneClass={
+        muted:'text-slate-400',
+        info:'text-cyan-300',
+        success:'text-emerald-300',
+        error:'text-rose-300'
+      }[tone]||'text-slate-400';
+      el.className=`text-xs text-center min-h-[1.25rem] mt-1 ${toneClass}`;
+      el.textContent=message;
+    }
+
+    function render(){
+      const beforeBtn=document.getElementById('btnBefore');
+      const afterBtn=document.getElementById('btnAfter');
+      const before=Math.max(0, Number(state.totals.before)||0);
+      const after=Math.max(0, Number(state.totals.after)||0);
+      const sum=before+after;
+      const beforePct=sum>0?(before/sum)*100:0;
+      const afterPct=sum>0?(after/sum)*100:0;
+      document.getElementById('beforePct').textContent=beforePct.toFixed(1)+'%';
+      document.getElementById('afterPct').textContent=afterPct.toFixed(1)+'%';
+      document.getElementById('beforeVotes').textContent=`${before} vote${before===1?'':'s'}`;
+      document.getElementById('afterVotes').textContent=`${after} vote${after===1?'':'s'}`;
+      document.getElementById('beforeBar').style.width=beforePct+'%';
+      document.getElementById('afterBar').style.width=afterPct+'%';
+      document.getElementById('totals').textContent=`${before} : ${after}`;
+      const voteLabel=state.userVote?{
+        before:'Before deadline',
+        after:'After deadline'
+      }[state.userVote]:'—';
+      document.getElementById('yourVote').textContent=voteLabel||'—';
+      if(beforeBtn){
+        beforeBtn.classList.toggle('selected', state.userVote==='before');
+        beforeBtn.setAttribute('aria-pressed', state.userVote==='before');
+      }
+      if(afterBtn){
+        afterBtn.classList.toggle('selected', state.userVote==='after');
+        afterBtn.setAttribute('aria-pressed', state.userVote==='after');
+      }
+    }
+
+    function setButtonsDisabled(disabled){
+      ['btnBefore','btnAfter'].forEach(id=>{
+        const btn=document.getElementById(id);
+        if(btn){ btn.disabled=disabled; btn.classList.toggle('vote-disabled', disabled); }
+      });
+    }
+
+    async function ensureCounters(){
+      await Promise.all(Object.values(COUNT_KEYS).map(async key=>{
+        try{
+          await fetch(`${COUNT_API_BASE}/create?namespace=${COUNT_NAMESPACE}&key=${key}&value=0`);
+        }catch(_){ /* ignore */ }
+      }));
+    }
+
+    async function refreshTotals({ showStatus=true }={}){
+      if(showStatus) setVoteStatus('Syncing votes…','info');
+      try{
+        await ensureCounters();
+        const entries=await Promise.all(Object.entries(COUNT_KEYS).map(async([side,key])=>{
+          const res=await fetch(`${COUNT_API_BASE}/get/${COUNT_NAMESPACE}/${key}`);
+          if(!res.ok) throw new Error('Failed to fetch count');
+          const data=await res.json();
+          return [side, Number(data.value)||0];
+        }));
+        entries.forEach(([side,value])=>{ state.totals[side]=Math.max(0,value); });
+        totalsLoaded=true;
+        render();
+        if(showStatus) setVoteStatus('','muted');
+      }catch(err){
+        console.error(err);
+        totalsLoaded=false;
+        if(showStatus) setVoteStatus('Could not sync votes. Please try again later.','error');
+      }
+    }
+
+    async function updateCounter(side, delta){
+      const key=COUNT_KEYS[side];
+      if(!key) throw new Error('Invalid counter key');
+      const res=await fetch(`${COUNT_API_BASE}/update/${COUNT_NAMESPACE}/${key}?amount=${delta}`);
+      if(!res.ok) throw new Error('Failed to update counter');
+      const data=await res.json();
+      return Number(data.value)||0;
+    }
+
+    async function setCounter(side, value){
+      const key=COUNT_KEYS[side];
+      if(!key) throw new Error('Invalid counter key');
+      const res=await fetch(`${COUNT_API_BASE}/set/${COUNT_NAMESPACE}/${key}?value=${value}`);
+      if(!res.ok) throw new Error('Failed to set counter');
+      const data=await res.json();
+      return Number(data.value)||0;
+    }
+
+    async function vote(side){
+      if(!['before','after'].includes(side)||votePending) return;
+      const previous=state.userVote;
+      if(previous===side){
+        setVoteStatus('You already picked that side.','info');
+        return;
+      }
+      const firstVote=!previous;
+      votePending=true;
+      setButtonsDisabled(true);
+      try{
+        if(!totalsLoaded){
+          await refreshTotals({ showStatus:false });
+        }
+        await ensureCounters();
+        if(previous && (!state.totals || typeof state.totals[previous]!=='number')){
+          await refreshTotals({ showStatus:false });
+        }
+        if(previous){
+          const updatedPrev=await updateCounter(previous,-1);
+          if(updatedPrev<0){
+            const resetVal=await setCounter(previous,0);
+            state.totals[previous]=Math.max(0,resetVal);
+          }else{
+            state.totals[previous]=Math.max(0,updatedPrev);
+          }
+        }
+        const updatedNew=await updateCounter(side,1);
+        state.totals[side]=Math.max(0,updatedNew);
+        state.userVote=side;
+        saveUserVote(side);
+        render();
+        setVoteStatus('Vote recorded!','success');
+        if(firstVote) confettiLaunch();
+      }catch(err){
+        console.error(err);
+        setVoteStatus('Could not record vote. Please check your connection.','error');
+        await refreshTotals({ showStatus:false });
+      }finally{
+        setButtonsDisabled(false);
+        votePending=false;
+      }
     }
 
     function setupEmail(){
