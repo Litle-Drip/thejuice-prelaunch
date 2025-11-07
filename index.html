@@ -701,5 +701,79 @@
 })();
 </script>
 <!-- === END: Vote Sync + Resilience Patch === -->
+  <script>
+/* Force LOCAL votes (no external APIs) — safe override */
+window.addEventListener('DOMContentLoaded', () => {
+  // Minimal state if your page didn't define it
+  window.state = window.state || { totals:{ before:0, after:0 }, userVote:null };
+
+  const LSK_BEFORE = 'local_totals_before';
+  const LSK_AFTER  = 'local_totals_after';
+  const LSK_VOTE   = 'userVote';
+
+  // Init local totals
+  try{
+    if (!localStorage.getItem(LSK_BEFORE)) localStorage.setItem(LSK_BEFORE, '0');
+    if (!localStorage.getItem(LSK_AFTER))  localStorage.setItem(LSK_AFTER,  '0');
+    const v = localStorage.getItem(LSK_VOTE);
+    if (v === 'before' || v === 'after') window.state.userVote = v;
+  }catch(_){}
+
+  // Never touch the network:
+  window.ensureCounters = async function(){};
+
+  // Local counter update
+  window.updateCounter = async function(side, delta){
+    const key = side === 'before' ? LSK_BEFORE : LSK_AFTER;
+    const cur = parseInt(localStorage.getItem(key)||'0',10) || 0;
+    const next = Math.max(0, cur + delta);
+    localStorage.setItem(key, String(next));
+    return next;
+  };
+
+  // Local refresh
+  window.refreshTotals = async function({showStatus=true}={}){
+    const b = parseInt(localStorage.getItem(LSK_BEFORE)||'0',10) || 0;
+    const a = parseInt(localStorage.getItem(LSK_AFTER)||'0',10) || 0;
+    window.state.totals.before = b;
+    window.state.totals.after  = a;
+    window.totalsLoaded = true;
+    if (typeof window.render === 'function') window.render();
+    if (showStatus && typeof window.setVoteStatus === 'function') {
+      setVoteStatus('Local mode: totals are per-device only.', 'muted');
+    }
+  };
+
+  // Save vote locally (in case your page already calls this)
+  window.saveUserVote = function(side){
+    try { localStorage.setItem(LSK_VOTE, side||''); } catch(_){}
+  };
+
+  // If your page defines vote(), we wrap it; else we define one.
+  const originalVote = window.vote;
+  window.vote = async function(side){
+    const prev = window.state.userVote;
+    if (prev === side) {
+      if (typeof setVoteStatus === 'function') setVoteStatus('You already picked that side.','info');
+      return;
+    }
+    try{
+      // switch: decrement previous, increment new
+      if (prev) await window.updateCounter(prev, -1);
+      const v = await window.updateCounter(side, +1);
+      window.state.userVote = side;
+      window.saveUserVote(side);
+      if (typeof window.render === 'function') window.render();
+      if (typeof setVoteStatus === 'function') setVoteStatus('Vote recorded!','success');
+    }catch(e){
+      console.error(e);
+      if (typeof setVoteStatus === 'function') setVoteStatus('Local vote failed (storage blocked).','error');
+    }
+  };
+
+  // Kick a first render/refresh
+  window.refreshTotals({showStatus:true});
+});
+</script>
 </body>
 </html>
