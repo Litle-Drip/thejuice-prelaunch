@@ -62,6 +62,8 @@
   <script>
     // === Email capture config ===
     const EMAIL_POST_ENDPOINT = 'https://formspree.io/f/xwprjbqj';
+     // === Treasury (ETH + ERC-20) donation address ===
+  const TREASURY_ADDR = '0x5a0d1c4b58dbea38471841053de97cb158f19a6e'; // your address
   </script>
 </head>
 
@@ -311,7 +313,37 @@
         }
       });
     }
-
+<!-- Donate to Treasury -->
+<div class="glass rounded-2xl p-5 mt-6">
+  <div class="flex items-start gap-4 flex-col md:flex-row md:items-center md:justify-between">
+    <div>
+      <div class="text-lg font-semibold">Support the launch</div>
+      <p class="text-slate-400 text-sm">
+        Send <strong>ETH</strong> or any <strong>ERC-20</strong> token to our treasury address.
+      </p>
+      <div class="mt-2">
+        <code id="treasuryText" class="text-xs bg-white/5 border border-white/10 rounded px-2 py-1 break-all">
+          <!-- populated by JS -->
+        </code>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button id="copyTreasury" class="btn rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">
+          Copy address
+        </button>
+        <a id="openInWallet"
+           class="btn rounded-lg px-3 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white"
+           href="#"
+           rel="noopener">
+          Open in wallet
+        </a>
+      </div>
+      <p class="text-xs text-slate-500 mt-2">Tip: most wallets accept the QR below or pasting the address.</p>
+    </div>
+    <div class="mt-4 md:mt-0">
+      <canvas id="qrDonate" width="160" height="160" class="rounded-lg border border-white/20 bg-white/5"></canvas>
+    </div>
+  </div>
+</div>
     /* ---------- Boot ---------- */
     document.addEventListener('DOMContentLoaded', ()=>{
       const deadline=parseDeadline(LAUNCH_UTC);
@@ -324,6 +356,27 @@
       initLocal();
       render();                       // show current local totals
       drawQR(location.href,96,document.getElementById('qr'));
+     // --- Treasury QR & buttons ---
+const addr = TREASURY_ADDR;
+const ethUri = `ethereum:${addr}`;          // EIP-681 basic address URI
+document.getElementById('treasuryText').textContent = addr;
+document.getElementById('openInWallet').href = ethUri;
+drawQR(ethUri, 128, document.getElementById('qrDonate'));
+
+document.getElementById('copyTreasury').addEventListener('click', async (e)=>{
+  e.preventDefault();
+  try{
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(addr);
+    else {
+      const ta=document.createElement('textarea');
+      ta.value=addr; ta.setAttribute('readonly',''); ta.style.position='absolute'; ta.style.left='-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    }
+    setVoteStatus?.('Treasury address copied ✓','success');
+  }catch(_){
+    setVoteStatus?.('Could not copy address.','error');
+  }
+});
       setupEmail();
       setupCopy();
 
