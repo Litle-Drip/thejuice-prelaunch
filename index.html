@@ -195,8 +195,8 @@
       </p>
 
       <code
-  id="treasuryText"
-  class="block w-full md:w-[480px] text-base md:text-lg font-semibold tracking-wide
+  id="t"
+  class="block w-full md:w-[520px] text-base md:text-lg font-semibold tracking-wide
          bg-white/10 border border-white/20 rounded-lg px-3 py-2 break-all">
   0x5a0d1c4b58dbea38471841053de97cb158f19a6e
 </code>
@@ -489,7 +489,7 @@ const addr   = TREASURY_ADDR.trim();
 const ethUri = `ethereum:${addr}`;
 
 // Put the address text in the UI
-const tText = document.getElementById('treasuryText');
+const tText = document.getElementById('t');
 if (tText) tText.textContent = addr;
 if (tText) {
   tText.addEventListener('click', () => {
