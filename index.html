@@ -153,15 +153,8 @@
           <div class="progress mt-3"><span id="afterBar" style="width:0%"></span></div>
         </button>
       </div>
-<!-- Supabase vote totals (Step 3 placeholder) -->
+<!-- Supabase vote totals (kept as text only) -->
 <div id="totalsText" class="text-slate-300 text-center text-sm mt-3">0 : 0 • Total 0</div>
-<div class="progress h-1.5 rounded-full overflow-hidden my-2">
-  <span id="beforeBar" style="display:block;height:100%;background:#22c55e;width:0%;"></span>
-</div>
-<div class="progress h-1.5 rounded-full overflow-hidden">
-  <span id="afterBar" style="display:block;height:100%;background:#ef4444;width:0%;"></span>
-</div>
-<!-- /Supabase vote totals -->
 
       <div class="grid md:grid-cols-3 grid-gap">
         <div class="glass rounded-xl p-3 text-center"><div class="text-xs text-slate-300">Your vote</div><div id="yourVote" class="text-sm font-medium">—</div></div>
@@ -255,9 +248,11 @@
 <!-- Supabase live voting -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL  = 'https://blzofuzlxqxcovkpqiah.supabase.co';      // ← replace
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsem9mdXpseHF4Y292a3BxaWFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3MjYxNzYsImV4cCI6MjA3ODMwMjE3Nn0.YnzCIbQA_PthZhkZrH0kK5qAdRaqs1pSwtbLgulpoXA';                         // ← replace
-const PAGE_ID       = 'prelaunch-2025';                        // any label you like
+window.SB_ACTIVE = true; // tells the local preview code not to bind its listeners
+
+const SUPABASE_URL  = 'https://blzofuzlxqxcovkpqiah.supabase.co';        // ← your URL
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsem9mdXpseHF4Y292a3BxaWFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3MjYxNzYsImV4cCI6MjA3ODMwMjE3Nn0.YnzCIbQA_PthZhkZrH0kK5qAdRaqs1pSwtbLgulpoXA'; // ← your anon key
+const PAGE_ID       = 'prelaunch-2025';
 
 const headers = {
   'apikey': SUPABASE_ANON,
@@ -270,6 +265,10 @@ const deviceFP = (() => {
   if(!v){v=crypto.randomUUID();localStorage.setItem(k,v);} return v;
 })();
 
+function set(txt){ const el=document.getElementById('voteStatus'); if(el){ el.className='text-xs text-center text-emerald-300'; el.textContent=txt; } }
+function setText(id, v){ const el=document.getElementById(id); if(el) el.textContent = v; }
+function setWidth(id, p){ const el=document.getElementById(id); if(el) el.style.width = p + '%'; }
+
 async function sendVote(choice){
   await fetch(`${SUPABASE_URL}/rest/v1/votes`,{
     method:'POST',
@@ -277,26 +276,46 @@ async function sendVote(choice){
     body:JSON.stringify({page:PAGE_ID,choice,fingerprint:deviceFP,ua:navigator.userAgent})
   }).catch(console.error);
   await refreshTotals();
+  confetti?.({ particleCount:80, spread:60, origin:{y:0.7} });
 }
 
 async function refreshTotals(){
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/vote_totals?select=choice,total&page=eq.${PAGE_ID}`,{
-    headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON}
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/vote_totals?select=choice,total&page=eq.${PAGE_ID}`,{
+    headers
   });
-  const rows=await res.json();
-  const before=rows.find(r=>r.choice==='before')?.total||0;
-  const after =rows.find(r=>r.choice==='after') ?.total||0;
-  const total=before+after;
-  document.getElementById('totalsText').textContent=`${before} : ${after} • Total ${total}`;
-  const bp=total?Math.round(before*100/total):0;
-  const ap=100-bp;
-  document.getElementById('beforeBar').style.width=`${bp}%`;
-  document.getElementById('afterBar').style.width =`${ap}%`;
+  const rows = await res.json();
+  const before = rows.find(r=>r.choice==='before')?.total||0;
+  const after  = rows.find(r=>r.choice==='after') ?.total||0;
+  const total  = before + after;
+
+  // update the small text line
+  const tt = document.getElementById('totalsText');
+  if (tt) tt.textContent = `${before} : ${after} • Total ${total}`;
+
+  // update your CARDS (percents, counts, bars, “Totals” card)
+  const bp = total ? Math.round(before*100/total) : 0;
+  const ap = 100 - bp;
+
+  setText('beforePct',  bp + '%');
+  setText('afterPct',   ap + '%');
+  setText('beforeVotes', `${before} vote${before===1?'':'s'}`);
+  setText('afterVotes',  `${after} vote${after===1?'':'s'}`);
+  setText('totals',     `${before} : ${after}`);
+
+  setWidth('beforeBar', bp);
+  setWidth('afterBar',  ap);
+
+  // message line
+  set('Live totals: Supabase');
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('btnBefore')?.addEventListener('click',()=>sendVote('before'));
-  document.getElementById('btnAfter') ?.addEventListener('click',()=>sendVote('after'));
+document.addEventListener('DOMContentLoaded', () => {
+  // Make Supabase the ONLY handlers for the buttons
+  const b = document.getElementById('btnBefore');
+  const a = document.getElementById('btnAfter');
+  b?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopImmediatePropagation(); sendVote('before'); });
+  a?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopImmediatePropagation(); sendVote('after');  });
+
   refreshTotals();
 });
 </script>
@@ -470,8 +489,10 @@ document.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('deadlineLabel').textContent = deadline.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
       startCountdown(deadline);
 
-      document.getElementById('btnBefore').addEventListener('click',()=>vote('before'));
-      document.getElementById('btnAfter').addEventListener('click',()=>vote('after'));
+      if (!window.SB_ACTIVE) {
+  document.getElementById('btnBefore').addEventListener('click',()=>vote('before'));
+  document.getElementById('btnAfter').addEventListener('click',()=>vote('after'));
+}
 
       initLocal();
       render();
