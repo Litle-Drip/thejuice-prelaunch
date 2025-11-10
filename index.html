@@ -153,6 +153,15 @@
           <div class="progress mt-3"><span id="afterBar" style="width:0%"></span></div>
         </button>
       </div>
+<!-- Supabase vote totals (Step 3 placeholder) -->
+<div id="totalsText" class="text-slate-300 text-center text-sm mt-3">0 : 0 • Total 0</div>
+<div class="progress h-1.5 rounded-full overflow-hidden my-2">
+  <span id="beforeBar" style="display:block;height:100%;background:#22c55e;width:0%;"></span>
+</div>
+<div class="progress h-1.5 rounded-full overflow-hidden">
+  <span id="afterBar" style="display:block;height:100%;background:#ef4444;width:0%;"></span>
+</div>
+<!-- /Supabase vote totals -->
 
       <div class="grid md:grid-cols-3 grid-gap">
         <div class="glass rounded-xl p-3 text-center"><div class="text-xs text-slate-300">Your vote</div><div id="yourVote" class="text-sm font-medium">—</div></div>
@@ -243,6 +252,55 @@
       <p class="text-slate-400 text-xs text-center">Pre-launch demo: votes are visual only. On launch, bets will be on-chain (Base) with trustless escrow and a protocol fee (min 2.5%).</p>
     </section>
   </main>
+<!-- Supabase live voting -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL  = 'https://YOUR-PROJECT.supabase.co';      // ← replace
+const SUPABASE_ANON = 'YOUR-ANON-KEY';                         // ← replace
+const PAGE_ID       = 'prelaunch-2025';                        // any label you like
+
+const headers = {
+  'apikey': SUPABASE_ANON,
+  'Authorization': 'Bearer ' + SUPABASE_ANON,
+  'Content-Type': 'application/json'
+};
+
+const deviceFP = (() => {
+  const k='juice_fp'; let v=localStorage.getItem(k);
+  if(!v){v=crypto.randomUUID();localStorage.setItem(k,v);} return v;
+})();
+
+async function sendVote(choice){
+  await fetch(`${SUPABASE_URL}/rest/v1/votes`,{
+    method:'POST',
+    headers,
+    body:JSON.stringify({page:PAGE_ID,choice,fingerprint:deviceFP,ua:navigator.userAgent})
+  }).catch(console.error);
+  await refreshTotals();
+}
+
+async function refreshTotals(){
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/vote_totals?select=choice,total&page=eq.${PAGE_ID}`,{
+    headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON}
+  });
+  const rows=await res.json();
+  const before=rows.find(r=>r.choice==='before')?.total||0;
+  const after =rows.find(r=>r.choice==='after') ?.total||0;
+  const total=before+after;
+  document.getElementById('totalsText').textContent=`${before} : ${after} • Total ${total}`;
+  const bp=total?Math.round(before*100/total):0;
+  const ap=100-bp;
+  document.getElementById('beforeBar').style.width=`${bp}%`;
+  document.getElementById('afterBar').style.width =`${ap}%`;
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('btnBefore')?.addEventListener('click',()=>sendVote('before'));
+  document.getElementById('btnAfter') ?.addEventListener('click',()=>sendVote('after'));
+  refreshTotals();
+});
+</script>
+<!-- /Supabase live voting -->
 
   <!-- Core logic: countdown, QR, local-only votes -->
   <script>
