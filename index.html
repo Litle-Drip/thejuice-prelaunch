@@ -166,28 +166,20 @@
 <div class="grid gap-4 mt-6 items-start md:grid-cols-[minmax(0,1fr)_auto]">
   <!-- Email + Notify -->
   <div class="space-y-3">
-    <form id="emailForm" class="w-full">
-      <div class="flex flex-col gap-2 sm:flex-row">
-        <input id="emailInput" type="email"
-               placeholder="Enter email for early access"
-               class="flex-1 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-400
-                      bg-slate-900/80 border border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
-               required>
-        <button id="notifyBtn"
-                class="rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white whitespace-nowrap"
-                type="submit">
-          Notify me
-        </button>
-      </div>
-      <p id="emailMsg" class="text-xs text-slate-400 min-h-[1rem]"></p>
-    </form>
-
-    <div class="flex flex-wrap items-center gap-2">
-      <button id="copyLink" class="h-[40px] rounded-lg px-3 bg-white/10 border border-white/20 hover:bg-white/15">
-        Copy page link
-      </button>
-      <span id="copyToast" class="text-xs text-emerald-300 opacity-0 transition-opacity">Copied ✓</span>
-    </div>
+   <form id="emailForm" class="flex flex-wrap justify-center gap-2 mt-2">
+  <input id="emailInput" type="email" placeholder="Enter email for early access"
+    class="rounded-lg px-3 py-2 w-full sm:w-auto sm:max-w-xs bg-white/10 border border-white/15 focus:outline-none"
+    required>
+  <button id="notifyBtn"
+    class="rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white whitespace-nowrap"
+    type="submit">
+    Notify me
+  </button>
+  <button id="copyLink"
+    class="rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15 h-[40px]">
+    Copy page link
+  </button>
+</form>
   </div>
 </div>
 <!-- Donate to Treasury (moved up, sits right under the row) -->
