@@ -42,9 +42,9 @@
   <style>
     body {
       background:
-        radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,.12), transparent 40%),
-        radial-gradient(1000px 700px at 90% 0%, rgba(255,215,0,.08), transparent 45%),
-        #0b1220;
+  radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,.10), transparent 40%),
+  radial-gradient(1000px 700px at 90% 0%, rgba(255,215,0,.06), transparent 45%),
+  linear-gradient(180deg, #0c1425, #0a0f1a);
       color:#fff;
       font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial
     }
@@ -119,10 +119,10 @@
       </div>
 
       <div id="countdown" class="grid grid-cols-2 md:grid-cols-4 gap-4 justify-center">
-        <div class="glass rounded-xl p-4 text-center"><div id="d" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Days</div></div>
-        <div class="glass rounded-xl p-4 text-center"><div id="h" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Hours</div></div>
-        <div class="glass rounded-xl p-4 text-center"><div id="m" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Minutes</div></div>
-        <div class="glass rounded-xl p-4 text-center"><div id="s" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Seconds</div></div>
+        <div class="glass rounded-2xl p-4 text-center"><div id="d" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Days</div></div>
+        <div class="glass rounded-2xl p-4 text-center"><div id="h" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Hours</div></div>
+        <div class="glass rounded-2xl p-4 text-center"><div id="m" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Minutes</div></div>
+        <div class="glass rounded-2xl p-4 text-center"><div id="s" class="digit text-5xl font-bold">—</div><div class="text-xs text-slate-300">Seconds</div></div>
       </div>
 
       <div class="grid md:grid-cols-2 grid-gap">
@@ -153,6 +153,7 @@
           <div class="progress mt-3"><span id="afterBar" style="width:0%"></span></div>
         </button>
       </div>
+<!-- Supabase vote totals (kept as text only) -->
 
       <div class="grid md:grid-cols-3 grid-gap">
         <div class="glass rounded-xl p-3 text-center"><div class="text-xs text-slate-300">Your vote</div><div id="yourVote" class="text-sm font-medium">—</div></div>
@@ -161,61 +162,44 @@
 
       <p id="voteStatus" class="text-xs text-center text-slate-400 min-h-[1.25rem]" aria-live="polite">Local preview: totals are per-device only.</p>
 
-      <!-- Parallel row: Email + Notify | Copy link | Page QR -->
-<div class="grid gap-3 items-center md:grid-cols-[1fr_auto_auto] mt-3 -mb-1">
+<!-- Parallel row: Email + Notify | Copy link | Page QR -->
+<div class="grid gap-4 mt-6 items-start md:grid-cols-[minmax(0,1fr)_auto]">
   <!-- Email + Notify -->
-  <form id="emailForm" class="w-full">
-    <div class="flex gap-2 w-full">
-      <input id="emailInput" type="email"
-             placeholder="Enter email for early access"
-             class="flex-1 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder:text-slate-400
-                    bg-slate-900/80 border border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
-             required>
-      <button id="notifyBtn"
-              class="rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white whitespace-nowrap"
-              type="submit">
-        Notify me
-      </button>
-    </div>
-    <p id="emailMsg" class="text-xs text-slate-400 mt-1"></p>
-  </form>
-
-  <!-- Copy link row (tighter) -->
-<div class="grid gap-2 items-center md:grid-cols-[1fr_auto_auto] mt-1 -mb-2">
-  <!-- spacer keeps email row grid consistent; leave empty -->
-  <div></div>
-
-  <button id="copyLink" class="h-[40px] rounded-lg px-3 bg-white/10 border border-white/20 hover:bg-white/15">
+  <div class="space-y-3">
+   <form id="emailForm" class="flex flex-wrap justify-center gap-2 mt-2">
+  <input id="emailInput" type="email" placeholder="Enter email for early access"
+  class="rounded-lg px-3 py-2 w-full sm:w-[280px] md:w-[340px] bg-white/10 border border-white/15 focus:outline-none"
+  required>
+  <button id="notifyBtn"
+    class="rounded-lg px-4 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white whitespace-nowrap"
+    type="submit">
+    Notify me
+  </button>
+  <button id="copyLink"
+    class="rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15 h-[40px]">
     Copy page link
   </button>
-
-  <!-- Page QR card -->
-<div class="flex items-center justify-center mt-1">
-  <canvas id="qr" width="140" height="140"
-    class="rounded-2xl border border-white/20 bg-white p-2 shadow-xl"></canvas>
+</form>
+    <p id="emailMsg" class="text-xs text-slate-400 mt-1"></p>
+  </div>
 </div>
-  
-</div>
-
-<!-- toast lives outside the grid so it doesn’t shift layout -->
-<span id="copyToast" class="block text-center text-xs text-emerald-300 opacity-0 transition-opacity mt-1">Copied ✓</span>
 <!-- Donate to Treasury (moved up, sits right under the row) -->
-<div class="glass rounded-2xl p-5 mt-4">
-  <!-- Keep ONLY these two children inside the row (left content + right QR) -->
-  <div class="flex items-start gap-4 flex-col md:flex-row md:items-center md:justify-between">
+<div class="glass rounded-2xl p-6 mt-6 text-[18px] leading-relaxed">
+  <div class="flex items-center justify-between gap-6 flex-col md:flex-row md:items-center">
 
     <!-- LEFT: text + address + buttons -->
-    <div class="md:w-[420px]">
+    <div class="md:w-[520px] flex flex-col justify-center">
       <div class="text-lg font-semibold">Support the launch</div>
-      <p class="text-slate-400 text-sm">
+      <p class="text-slate-300 text-base">
         Send <strong>ETH</strong> or any <strong>ERC-20</strong> token to our treasury address.
       </p>
 
-      <div class="mt-2">
-        <code id="treasuryText" class="text-xs bg-white/5 border border-white/10 rounded px-2 py-1 break-all"></code>
-      </div>
+      <code id="treasuryText"
+  class="text-base font-semibold font-mono tracking-wide bg-white/10 border border-white/15 rounded px-4 py-2
+         whitespace-nowrap overflow-x-auto inline-block w-full md:w-[480px] text-center text-white shadow-sm">
+</code>
 
-      <div class="flex gap-2 mt-3">
+      <div class="flex flex-wrap gap-2 mt-3 items-center justify-start">
         <button id="copyTreasury"
                 class="h-[40px] rounded-lg px-3 bg-white/10 border border-white/20 hover:bg-white/15">
           Copy address
@@ -247,6 +231,80 @@
       <p class="text-slate-400 text-xs text-center">Pre-launch demo: votes are visual only. On launch, bets will be on-chain (Base) with trustless escrow and a protocol fee (min 2.5%).</p>
     </section>
   </main>
+<!-- Supabase live voting -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.SB_ACTIVE = true; // tells the local preview code not to bind its listeners
+
+const SUPABASE_URL  = 'https://blzofuzlxqxcovkpqiah.supabase.co';        // ← your URL
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsem9mdXpseHF4Y292a3BxaWFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3MjYxNzYsImV4cCI6MjA3ODMwMjE3Nn0.YnzCIbQA_PthZhkZrH0kK5qAdRaqs1pSwtbLgulpoXA'; // ← your anon key
+const PAGE_ID       = 'prelaunch-2025';
+
+const headers = {
+  'apikey': SUPABASE_ANON,
+  'Authorization': 'Bearer ' + SUPABASE_ANON,
+  'Content-Type': 'application/json'
+};
+
+const deviceFP = (() => {
+  const k='juice_fp'; let v=localStorage.getItem(k);
+  if(!v){v=crypto.randomUUID();localStorage.setItem(k,v);} return v;
+})();
+
+function set(txt){ /* status hidden on production */ }
+function setText(id, v){ const el=document.getElementById(id); if(el) el.textContent = v; }
+function setWidth(id, p){ const el=document.getElementById(id); if(el) el.style.width = p + '%'; }
+
+async function sendVote(choice){
+  await fetch(`${SUPABASE_URL}/rest/v1/votes`,{
+    method:'POST',
+    headers,
+    body:JSON.stringify({page:PAGE_ID,choice,fingerprint:deviceFP,ua:navigator.userAgent})
+  }).catch(console.error);
+  await refreshTotals();
+  confetti?.({ particleCount:80, spread:60, origin:{y:0.7} });
+}
+
+async function refreshTotals(){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/vote_totals?select=choice,total&page=eq.${PAGE_ID}`,{
+    headers
+  });
+  const rows = await res.json();
+  const before = rows.find(r=>r.choice==='before')?.total||0;
+  const after  = rows.find(r=>r.choice==='after') ?.total||0;
+  const total  = before + after;
+
+  // update the small text line
+  const tt = document.getElementById('totalsText');
+  if (tt) tt.textContent = `${before} : ${after} • Total ${total}`;
+
+  // update your CARDS (percents, counts, bars, “Totals” card)
+  const bp = total ? Math.round(before*100/total) : 0;
+  const ap = 100 - bp;
+
+  setText('beforePct',  bp + '%');
+  setText('afterPct',   ap + '%');
+  setText('beforeVotes', `${before} vote${before===1?'':'s'}`);
+  setText('afterVotes',  `${after} vote${after===1?'':'s'}`);
+  setText('totals', `${before} : ${after} (Total ${total})`);
+
+  setWidth('beforeBar', bp);
+  setWidth('afterBar',  ap);
+
+  // message line
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Make Supabase the ONLY handlers for the buttons
+  const b = document.getElementById('btnBefore');
+  const a = document.getElementById('btnAfter');
+  b?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopImmediatePropagation(); sendVote('before'); });
+  a?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopImmediatePropagation(); sendVote('after');  });
+
+  refreshTotals();
+});
+</script>
+<!-- /Supabase live voting -->
 
   <!-- Core logic: countdown, QR, local-only votes -->
   <script>
@@ -416,8 +474,10 @@
       document.getElementById('deadlineLabel').textContent = deadline.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
       startCountdown(deadline);
 
-      document.getElementById('btnBefore').addEventListener('click',()=>vote('before'));
-      document.getElementById('btnAfter').addEventListener('click',()=>vote('after'));
+      if (!window.SB_ACTIVE) {
+  document.getElementById('btnBefore').addEventListener('click',()=>vote('before'));
+  document.getElementById('btnAfter').addEventListener('click',()=>vote('after'));
+}
 
       initLocal();
       render();
@@ -430,7 +490,12 @@ const ethUri = `ethereum:${addr}`;
 // Put the address text in the UI
 const tText = document.getElementById('treasuryText');
 if (tText) tText.textContent = addr;
-
+if (tText) {
+  tText.addEventListener('click', () => {
+    const r = document.createRange(); r.selectNodeContents(tText);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  });
+}
 // Detect EIP-1193 providers (multiple can exist)
 function allProviders() {
   const eth = window.ethereum;
