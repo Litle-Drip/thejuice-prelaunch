@@ -154,7 +154,6 @@
         </button>
       </div>
 <!-- Supabase vote totals (kept as text only) -->
-<div id="totalsText" class="text-slate-300 text-center text-sm mt-3">0 : 0 • Total 0</div>
 
       <div class="grid md:grid-cols-3 grid-gap">
         <div class="glass rounded-xl p-3 text-center"><div class="text-xs text-slate-300">Your vote</div><div id="yourVote" class="text-sm font-medium">—</div></div>
@@ -265,7 +264,7 @@ const deviceFP = (() => {
   if(!v){v=crypto.randomUUID();localStorage.setItem(k,v);} return v;
 })();
 
-function set(txt){ const el=document.getElementById('voteStatus'); if(el){ el.className='text-xs text-center text-emerald-300'; el.textContent=txt; } }
+function set(txt){ /* status hidden on production */ }
 function setText(id, v){ const el=document.getElementById(id); if(el) el.textContent = v; }
 function setWidth(id, p){ const el=document.getElementById(id); if(el) el.style.width = p + '%'; }
 
@@ -300,13 +299,12 @@ async function refreshTotals(){
   setText('afterPct',   ap + '%');
   setText('beforeVotes', `${before} vote${before===1?'':'s'}`);
   setText('afterVotes',  `${after} vote${after===1?'':'s'}`);
-  setText('totals',     `${before} : ${after}`);
+  setText('totals', `${before} : ${after} (Total ${total})`);
 
   setWidth('beforeBar', bp);
   setWidth('afterBar',  ap);
 
   // message line
-  set('Live totals: Supabase');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
