@@ -184,11 +184,11 @@
   </div>
 </div>
 <!-- Donate to Treasury (moved up, sits right under the row) -->
-<div class="glass rounded-2xl p-6 mt-6 text-[17px] leading-relaxed">
+<div class="glass rounded-2xl p-6 mt-6 text-[18px] leading-relaxed">
   <div class="flex items-start gap-6 flex-col md:flex-row md:items-center md:justify-between">
 
     <!-- LEFT: text + address + buttons -->
-    <div class="md:w-[420px]">
+    <div class="md:w-[520px]">
       <div class="text-lg font-semibold">Support the launch</div>
       <p class="text-slate-300 text-base">
         Send <strong>ETH</strong> or any <strong>ERC-20</strong> token to our treasury address.
@@ -196,12 +196,13 @@
 
       <div class="mt-2">
         <code id="treasuryText"
-  class="text-xs bg-white/5 border border-white/10 rounded px-3 py-2 break-all inline-block w-[290px] md:w-[320px] text-center">
+  class="text-sm font-mono tracking-[.02em] bg-white/5 border border-white/10 rounded px-3 py-2
+         whitespace-nowrap overflow-x-auto inline-block w-full md:w-[480px]">
 </code>
         
       </div>
 
-      <div class="flex flex-wrap gap-2 mt-3 items-center justify-center">
+      <div class="flex flex-wrap gap-2 mt-3 items-center justify-start">
         <button id="copyTreasury"
                 class="h-[40px] rounded-lg px-3 bg-white/10 border border-white/20 hover:bg-white/15">
           Copy address
@@ -492,7 +493,12 @@ const ethUri = `ethereum:${addr}`;
 // Put the address text in the UI
 const tText = document.getElementById('treasuryText');
 if (tText) tText.textContent = addr;
-
+if (tText) {
+  tText.addEventListener('click', () => {
+    const r = document.createRange(); r.selectNodeContents(tText);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  });
+}
 // Detect EIP-1193 providers (multiple can exist)
 function allProviders() {
   const eth = window.ethereum;
