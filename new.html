@@ -421,15 +421,66 @@ overlay.addEventListener('click', (e)=>{
       setTimeout(()=>{ window.location.href = REDIRECT_TO; }, 1200);
     }
 
-    function handleSubmit(){
-      if (submitting) return;
-      const v = (code.value || '').trim().toLowerCase();
-      if (v === 'admin'){
-        messageAndRedirect('Welcome, Operator. You’re early.');
-      } else {
-        messageAndRedirect('ACCESS GRANTED — YOU’LL BE NOTIFIED.');
-      }
-    }
+    // Easter egg keywords and messages
+const EGGS = {
+  admin:    { msg: "Welcome, Operator. You’re early." },
+  juice:    { msg: "Sweet. Access granted — hydration confirmed." },
+  base:     { msg: "Base connection verified. Node online." },
+  bet:      { msg: "Risk acknowledged. Wager logged." },
+  drip:     { msg: "Drip secured. Style level: maximum." },
+  labs:     { msg: "Lab coat detected. Proceed to experiment." },
+  chicago:  { msg: "Accessing from the Windy City… legacy approved." },
+  edison:   { msg: "Lightbulb moment detected 💡 welcome, innovator." },
+  gm:       { msg: "Good morning, degen. Access granted." },
+  wagmi:    { msg: "We all gain mutual insight. Permission approved." },
+  operator: { msg: "Access console override confirmed." },
+  juicebox: { msg: "Childhood nostalgia unlocked. Proceed responsibly." },
+  "404":    { msg: "Error… wait, never mind. Access granted anyway." },
+  matrix:   { msg: "Follow the white rabbit → /index.html" },
+  ilikejuice:{ msg: "That’s the spirit. ACCESS GRANTED." },
+  moon:     { msg: "Trajectory set: Base → Orbit." },
+  hodl:     { msg: "Long-term access verified." },
+  eth:      { msg: "Ethereum node handshake accepted." },
+  sepolia:  { msg: "Testnet credentials validated. You’re one of us." },
+  bullish:  { msg: "Confidence registered. Access permitted." },
+  neo:      { msg: "The One has entered the console." },
+  trinity:  { msg: "Signal locked. Backup acquired." },
+  zion:     { msg: "Last free city online." },
+  oracle:   { msg: "You already knew you’d type that." },
+  morpheus: { msg: "Dreamers make the code real." },
+  redpill:  { msg: "Reality loaded. Access beyond illusion." },
+  bluepill: { msg: "Nothing to see here… or is there?" },
+  glitch:   { msg: "System anomaly detected… Access still granted." },
+  root:     { msg: "Privilege escalation confirmed." },
+  "0x":     { msg: "Hex key accepted. Welcome to mainnet." },
+  entropy:  { msg: "Chaos stabilized. Proceed carefully." },
+  echo:     { msg: "Echo received. The system hears you." },
+  reboot:   { msg: "System rebooted successfully. Access restored." },
+  proxy:    { msg: "Signal rerouted through unknown node." },
+  ghost:    { msg: "Presence detected… yet unseen." },
+  satoshi:  { msg: "Genesis signature verified." },
+  booth:    { msg: "Phone line secured. Transmission open." },
+  lumen:    { msg: "Light pierces the code. Welcome." },
+  ops:      { msg: "Mission parameters acknowledged." }
+};
+
+// Multi-keyword smart handler
+function handleSubmit(){
+  if (submitting) return;
+  const v = (code.value || '').trim().toLowerCase();
+
+  // Try exact match first
+  let entry = EGGS[v];
+
+  // If not exact, find first partial match (e.g. “i like juice” triggers juice)
+  if (!entry) {
+    const foundKey = Object.keys(EGGS).find(k => v.includes(k));
+    if (foundKey) entry = EGGS[foundKey];
+  }
+
+  const msg = entry ? entry.msg : 'ACCESS GRANTED — YOU’LL BE NOTIFIED.';
+  messageAndRedirect(msg);
+}
 
     openBtn.addEventListener('click', () => {
       // If countdown already finished (button became Launch Now), just go
