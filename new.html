@@ -412,14 +412,25 @@ overlay.addEventListener('click', (e)=>{
       if (e.key === 'Enter' && document.activeElement === code) handleSubmit();
     }
 
-    function messageAndRedirect(msg){
-      status.className = 'small ok';
-      status.textContent = msg;
-      submitting = true;
-      submit.disabled = true;
-      openBtn.disabled = true;
-      setTimeout(()=>{ window.location.href = REDIRECT_TO; }, 1200);
+    function messageAndRedirect(msg) {
+  status.className = 'small ok';
+  status.textContent = "";
+  submitting = true;
+  submit.disabled = true;
+  openBtn.disabled = true;
+
+  // typewriter effect
+  const msgArray = msg.split("");
+  let i = 0;
+  const typer = setInterval(() => {
+    status.textContent += msgArray[i++];
+    if (i >= msgArray.length) {
+      clearInterval(typer);
+      // wait a bit, then redirect
+      setTimeout(() => { window.location.href = REDIRECT_TO; }, 800);
     }
+  }, 35);
+}
 
     // Easter egg keywords and messages
 const EGGS = {
