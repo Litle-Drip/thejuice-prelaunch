@@ -39,7 +39,7 @@
   })();
   </script>
 
-  <style>
+  <>
     body {
       background:
   radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,.10), transparent 40%),
@@ -95,6 +95,9 @@
   caret-color:#e5e7eb;
 }
     #qr,#qrDonate{image-rendering:crisp-edges;image-rendering:pixelated;}
+    @media (max-width: 420px){
+  #treasuryText { font-size: 14px; line-height: 1.15; }
+}
   </style>
 
   <script>
