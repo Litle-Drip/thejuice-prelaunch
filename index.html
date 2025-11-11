@@ -198,11 +198,10 @@
 
       <!-- Address field -->
       <code id="treasuryText"
-            class="block w-full md:w-[520px] text-[15px] md:text-base font-semibold tracking-wide
-                   bg-white/10 border border-white/20 rounded-lg px-3 py-2
-                   break-all md:break-normal whitespace-pre-wrap mt-2">
-      </code>
-
+  class="block w-full md:w-[520px] text-[15px] md:text-base font-semibold tracking-wide
+         bg-white/10 border border-white/20 rounded-lg px-3 py-2
+         break-all md:break-normal whitespace-pre-wrap mt-2">
+</code>
       <!-- Buttons -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 items-stretch">
         <button id="copyTreasury"
@@ -500,7 +499,7 @@ const addr   = TREASURY_ADDR.trim();
 const ethUri = `ethereum:${addr}`;
 
 // Put the address text in the UI
-const tText = document.getElementById('t');
+const tText = document.getElementById('treasuryText');
 if (tText) tText.textContent = addr;
 if (tText) {
   tText.addEventListener('click', () => {
