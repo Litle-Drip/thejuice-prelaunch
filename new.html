@@ -125,14 +125,17 @@ h1{
 }
 .row{display:flex;gap:12px;align-items:center;margin-top:14px}
 label{font-size:.9rem;color:var(--muted)}
-input[type=text]{
-  width:100%;
-  padding: clamp(12px, 1.6vw, 14px) 14px;
-  border-radius:12px;
-  background:rgba(255,255,255,.06);color:var(--text);
-  border:1px solid rgba(255,255,255,.14);outline:none;
-  font-weight:700;letter-spacing:.5px;
-  font-size: clamp(.95rem, 1.6vw, 1rem);
+input[type=text] {
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.14);
+  outline: none;
+  font-weight: 700;
+  letter-spacing: .5px;
+  font-size: 1.25rem; /* ⬅️ Bigger text (was around 1rem) */
 }
 input[type=text]::placeholder{color:#9fb2c6;font-weight:600;letter-spacing:.2px}
 .modal .btn{min-width:140px}
@@ -171,6 +174,13 @@ input[type=text]::placeholder{color:#9fb2c6;font-weight:600;letter-spacing:.2px}
 
 /* Hide background scroll when modal open (your JS toggles this class) */
 body.modal-open{overflow:hidden}
+    .modal {
+  font-size: 1.1rem; /* Slightly larger modal text */
+}
+.modal .btn {
+  font-size: 1.05rem;
+  padding: 16px 20px;
+}
   </style>
 </head>
 <body>
