@@ -184,42 +184,50 @@
   </div>
 </div>
 <!-- Donate to Treasury (moved up, sits right under the row) -->
-<div class="glass rounded-2xl p-6 mt-6 text-[18px] leading-relaxed">
-  <div class="flex gap-6 flex-col md:flex-row md:items-center md:justify-between">
-
+<div class="glass rounded-2xl p-6 md:p-6 leading-relaxed">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
     <!-- LEFT: text + address + buttons -->
     <div class="flex-1 min-w-0">
       <div class="text-lg font-semibold">Support the launch</div>
-      <p class="text-slate-300 text-base">
+      <p class="text-slate-300 text-base md:text-sm">
         Send <strong>ETH</strong> or any <strong>ERC-20</strong> token to our treasury address.
       </p>
 
-      <code
-  id="t"
-  class="block w-full md:w-[520px] text-base md:text-lg font-semibold tracking-wide
-         bg-white/10 border border-white/20 rounded-lg px-3 py-2 break-all">
-  0x5a0d1c4b58dbea38471841053de97cb158f19a6e
-</code>
+      <!-- Address field -->
+      <code id="treasuryText"
+            class="block w-full md:w-[520px] text-[15px] md:text-base font-semibold tracking-wide
+                   bg-white/10 border border-white/20 rounded-lg px-3 py-2
+                   break-all md:break-normal whitespace-pre-wrap mt-2">
+      </code>
 
-      <div class="flex flex-col sm:flex-row gap-2 mt-3 w-full md:w-[520px] items-stretch sm:items-center">
+      <!-- Buttons -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 items-stretch">
         <button id="copyTreasury"
-  class="w-full sm:w-auto h-[40px] rounded-lg px-3 py-2 bg-white/10 border border-white/20 hover:bg-white/15">
-  Copy address
-</button>
+                class="h-[44px] w-full rounded-lg px-3 bg-white/10 border border-white/20 hover:bg-white/15">
+          Copy address
+        </button>
 
-       <a id="openInWallet"
-  class="w-full sm:w-auto h-[40px] rounded-lg px-3 py-2 bg-cyan-500/80 hover:bg-cyan-500 text-white inline-flex items-center justify-center"
-  href="#" rel="noopener">
-  Open MetaMask (0x5a0d…9a6e)
-</a>
+        <a id="openInWallet"
+           class="h-[44px] w-full rounded-lg px-3 bg-cyan-500/80 hover:bg-cyan-500 text-white
+                  inline-flex items-center justify-center"
+           href="#"
+           rel="noopener">
+          Open MetaMask (0x5a0d...9a6e)
+        </a>
       </div>
     </div>
 
     <!-- RIGHT: donation QR -->
-    <div class="self-center md:self-auto">
-      <canvas id="qrDonate" width="160" height="160"
+    <div class="self-center md:self-auto mt-4 md:mt-0">
+      <canvas id="qrDonate" width="180" height="180"
               class="rounded-2xl border border-white/20 bg-white p-2 shadow-xl"></canvas>
     </div>
+  </div>
+
+  <p class="text-slate-400 text-xs mt-3">
+    Tip: most wallets accept the QR below or pasting the address.
+  </p>
+</div>
 
   </div> <!-- /row -->
 
