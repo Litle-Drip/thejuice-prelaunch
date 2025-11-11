@@ -1,1 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>The Juice — Access</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta name="color-scheme" content="dark">
+  <style>
+    :root{
+      --bg0:#0b1220; --bg1:#0a0f1a; --card:#0f172a;
+      --muted:#94a3b8; --text:#e5e7eb;
+      --accent:#06b6d4; --accent-2:#22c55e;
+      --border:#1f2a44; --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100svh; color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 10% 10%, rgba(0,230,246,.12), transparent 40%),
+        radial-gradient(1000px 700px at 90% 0%, rgba(255,215,0,.08), transparent 45%),
+        linear-gradient(180deg,var(--bg0),var(--bg1));
+      font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    }
+    .wrap{max-width:980px;margin:40px auto;padding:0 18px}
+    .panel{
+      background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));
+      border:1px solid var(--border);
+      border-radius:calc(var(--radius) + 6px);
+      box-shadow:var(--shadow);
+      padding:28px 24px;text-align:center
+    }
+    h1{margin:12px 0 8px;font-weight:800;letter-spacing:.2px}
+    .tagline{color:var(--muted);font-size:.95rem;margin-top:2px}
+    .digits{display:flex;gap:16px;justify-content:center;margin:26px 0 18px}
+    .digit{
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px; width:140px; padding:14px 0;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 10px 24px rgba(0,0,0,.22);
+    }
+    .digit b{display:block;font-size:40px;letter-spacing:.5px}
+    .digit span{display:block;color:var(--muted);font-size:.8rem;margin-top:4px}
+    .btn{
+      appearance:none;border:0;cursor:pointer;background:var(--accent);color:white;font-weight:700;
+      border-radius:12px;padding:14px 20px;min-width:220px;
+      box-shadow:0 6px 18px rgba(6,182,212,.35);
+      transition:transform .08s ease, filter .2s ease, opacity .2s ease;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .subtle{color:var(--muted);font-size:.9rem;margin-top:14px}
+
+    /* modal */
+    .overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.45);
+      display:none;align-items:center;justify-content:center;
+      padding:18px;z-index:40;
+    }
+    .overlay.show{display:flex}
+    .modal{
+      width:min(560px,92vw);
+      background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.025));
+      border:1px solid var(--border);
+      border-radius:20px;padding:22px 20px 18px;
+      box-shadow:var(--shadow);
+      text-align:left;
+    }
+    .row{display:flex;gap:12px;align-items:center;margin-top:14px}
+    label{font-size:.9rem;color:var(--muted)}
+    input[type=text]{
+      width:100%;padding:14px 14px;border-radius:12px;
+      background:rgba(255,255,255,.06);color:var(--text);
+      border:1px solid rgba(255,255,255,.14);outline:none;
+      font-weight:700;letter-spacing:.5px;
+    }
+    input[type=text]::placeholder{color:#9fb2c6;font-weight:600;letter-spacing:.2px}
+    .modal .btn{min-width:140px}
+    .ok{color:var(--accent-2);font-weight:700}
+    .warn{color:#fca5a5;font-weight:700}
+    .foot{display:flex;justify-content:space-between;gap:12px;
+      color:var(--muted);font-size:.85rem;margin-top:18px;flex-wrap:wrap}
+    .pill{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:999px;padding:8px 12px;color:var(--muted);
+    }
+    .small{font-size:.85rem}
+    @media (max-width:640px){
+      .digit{width:120px}
+      .digits{gap:12px}
+      .btn{min-width:unset;width:100%}
+      .foot{justify-content:center}
+    }
+
+    /* hide background scroll when modal open */
+    body.modal-open{overflow:hidden}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel" role="region" aria-labelledby="heroTitle">
+      <div class="pill small">The first ever bet on The Juice… was The Juice itself</div>
+      <h1 id="heroTitle">Will The Juice launch before Dec 31, 2025?</h1>
+      <div class="tagline">No bookie. Just code. (Pre-launch access console)</div>
+
+      <div class="digits" id="count" aria-live="polite">
+        <div class="digit"><b id="d">–</b><span>Days</span></div>
+        <div class="digit"><b id="h">–</b><span>Hours</span></div>
+        <div class="digit"><b id="m">–</b><span>Minutes</span></div>
+        <div class="digit"><b id="s">–</b><span>Seconds</span></div>
+      </div>
+
+      <button class="btn" id="open" aria-haspopup="dialog">REQUEST ACCESS</button>
+      <div class="subtle" id="geo">Accessing from: …</div>
+
+      <noscript>
+        <p class="subtle" style="margin-top:12px">
+          JavaScript is off — <a href="index.html" style="color:#a5f3fc">continue to the site</a>.
+        </p>
+      </noscript>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+      <div class="pill small">Access Console</div>
+      <h2 id="modalTitle" style="margin:10px 0 6px">Enter Access Code (optional)</h2>
+      <p id="modalDesc" class="small" style="margin:0 0 10px;color:var(--muted)">Hint: you don’t need one.</p>
+
+      <div class="row">
+        <input id="code" type="text" placeholder="ACCESS CODE (optional)" autocomplete="off" />
+        <button class="btn" id="submit">Submit</button>
+      </div>
+
+      <p id="status" class="small" style="min-height:24px;margin-top:12px;"></p>
+
+      <div class="foot">
+        <span class="small">This screen is for vibes only.</span>
+        <span class="small">You’ll be redirected to the live page after access is granted.</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Utilities =====
+    const sameDirHref = (file) => new URL(file, window.location.href).href;
+    const REDIRECT_TO = sameDirHref('index.html'); // safe for GitHub Pages subpaths
+
+    // ===== Countdown (to Dec 31, 2025 23:59:59 local) =====
+    (function(){
+      const end = new Date('2025-12-31T23:59:59').getTime();
+      const ids = {d: 'd', h: 'h', m: 'm', s: 's'};
+      const btn = document.getElementById('open');
+
+      function tick(){
+        const now = Date.now();
+        let diff = Math.max(0, end - now);
+        const d = Math.floor(diff / 86400000); diff %= 86400000;
+        const h = Math.floor(diff / 3600000);  diff %= 3600000;
+        const m = Math.floor(diff / 60000);    diff %= 60000;
+        const s = Math.floor(diff / 1000);
+
+        document.getElementById(ids.d).textContent = d;
+        document.getElementById(ids.h).textContent = h;
+        document.getElementById(ids.m).textContent = m;
+        document.getElementById(ids.s).textContent = s;
+
+        // When countdown hits zero, switch to "Launch Now"
+        if ((end - now) <= 0) {
+          btn.textContent = 'LAUNCH NOW';
+          btn.onclick = () => window.location.href = REDIRECT_TO;
+          btn.setAttribute('aria-label', 'Launch Now');
+        }
+      }
+      tick(); setInterval(tick, 1000);
+    })();
+
+    // ===== Location (best effort, soft-fail) =====
+    (async function showGeo(){
+      const el = document.getElementById('geo');
+      try{
+        const ctl = new AbortController();
+        const timeout = setTimeout(()=>ctl.abort(), 2000);
+        const r = await fetch('https://ipapi.co/json/', {signal: ctl.signal});
+        clearTimeout(timeout);
+        if(!r.ok) throw new Error('geo fail');
+        const j = await r.json();
+        const city = j.city || 'your area', region = j.region || j.country || '';
+        el.textContent = `Accessing from: ${city}${region ? ', ' + region : ''}`;
+      }catch{
+        el.textContent = 'Accessing from: your area';
+      }
+    })();
+
+    // ===== Modal + Access Flow =====
+    const overlay = document.getElementById('overlay');
+    const openBtn  = document.getElementById('open');
+    const code     = document.getElementById('code');
+    const status   = document.getElementById('status');
+    const submit   = document.getElementById('submit');
+
+    let submitting = false;
+    let lastFocus = null;
+
+    function trapFocus(e){
+      // simple focus trap: keep focus within modal
+      const focusables = overlay.querySelectorAll('button, [href], input, textarea, [tabindex]:not([tabindex="-1"])');
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey && document.activeElement === first){ last.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === last){ first.focus(); e.preventDefault(); }
+    }
+
+    function openModal(){
+      lastFocus = document.activeElement;
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden','false');
+      document.body.classList.add('modal-open');
+      setTimeout(()=>code.focus(), 50);
+      document.addEventListener('keydown', onKeydown);
+      overlay.addEventListener('keydown', trapFocus);
+    }
+
+    function closeModal(){
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden','true');
+      document.body.classList.remove('modal-open');
+      document.removeEventListener('keydown', onKeydown);
+      overlay.removeEventListener('keydown', trapFocus);
+      if (lastFocus) lastFocus.focus();
+    }
+
+    function onKeydown(e){
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Enter' && document.activeElement === code) handleSubmit();
+    }
+
+    function messageAndRedirect(msg){
+      status.className = 'small ok';
+      status.textContent = msg;
+      submitting = true;
+      submit.disabled = true;
+      openBtn.disabled = true;
+      setTimeout(()=>{ window.location.href = REDIRECT_TO; }, 1200);
+    }
+
+    function handleSubmit(){
+      if (submitting) return;
+      const v = (code.value || '').trim().toLowerCase();
+      if (v === 'admin'){
+        messageAndRedirect('Welcome, Operator. You’re early.');
+      } else {
+        messageAndRedirect('ACCESS GRANTED — YOU’LL BE NOTIFIED.');
+      }
+    }
+
+    openBtn.addEventListener('click', () => {
+      // If countdown already finished (button became Launch Now), just go
+      if (openBtn.textContent.trim().toLowerCase() === 'launch now') {
+        window.location.href = REDIRECT_TO; return;
+      }
+      openModal();
+    });
+    submit.addEventListener('click', handleSubmit);
+    code.addEventListener('input', () => { status.textContent = ''; });
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay){ closeModal(); }});
+  </script>
+</body>
+</html>
 
