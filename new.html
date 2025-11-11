@@ -218,6 +218,36 @@ body.modal-open{overflow:hidden}
   border-color: rgba(255,255,255,.2);
   box-shadow: 0 0 8px rgba(6,182,212,.2);
 }
+    /* Lock background visually and boost contrast on mobile */
+.overlay{
+  background: rgba(7,10,18,.68);                /* darker */
+  backdrop-filter: blur(6px) saturate(120%);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  z-index: 9999;                                 /* above everything */
+}
+
+/* Modal sizing + scrolling safety */
+.modal{
+  width: min(640px, 92vw);
+  max-height: 80svh;                             /* keep on screen */
+  overflow: auto;                                /* scroll inside if needed */
+}
+
+/* Prevent background scroll on iOS */
+body.modal-open{
+  position: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Input/Button readability and stacking on small phones */
+@media (max-width: 480px){
+  .modal h2{ font-size: 1.5rem; line-height: 1.2; }
+  .row{ flex-direction: column; align-items: stretch; gap: 10px; }
+  .modal .btn{ width: 100%; }
+  .modal input[type=text]{ font-size: 18px; }     /* >=16px avoids iOS zoom */
+  .modal p.small, .modal .foot span{ font-size: 1rem; }
+}
   </style>
 </head>
 <body>
@@ -323,6 +353,28 @@ body.modal-open{overflow:hidden}
     const code     = document.getElementById('code');
     const status   = document.getElementById('status');
     const submit   = document.getElementById('submit');
+function openModal(){
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden','false');
+  document.body.classList.add('modal-open');      // ⬅️ add this
+  setTimeout(()=>code.focus(), 50);
+}
+
+function closeAfter(msgClass, msg){
+  status.className = msgClass; status.textContent = msg;
+  setTimeout(()=>{ window.location.href = '/index.html'; }, 1200);
+}
+
+// Keep your existing handlers…
+
+// Also let tapping the backdrop close AND re-enable scroll:
+overlay.addEventListener('click', (e)=>{
+  if(e.target === overlay){
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+    document.body.classList.remove('modal-open'); // ⬅️ add this
+  }
+});
 
     let submitting = false;
     let lastFocus = null;
